@@ -26,3 +26,28 @@ pub async fn create_bpv_device(conductor: &SweetConductor, zome: &SweetZome, bpv
     record
 }
 
+
+
+pub async fn sample_measure_collection_1(conductor: &SweetConductor, zome: &SweetZome) -> MeasureCollection {
+    MeasureCollection {
+          bpv_device_hash: create_bpv_device(conductor, zome, sample_bpv_device_1(conductor, zome).await).await.signed_action.hashed.hash,
+	  measures: vec![10],
+	  external_resistor_ohms: 10,
+    }
+}
+
+pub async fn sample_measure_collection_2(conductor: &SweetConductor, zome: &SweetZome) -> MeasureCollection {
+    MeasureCollection {
+          bpv_device_hash: create_bpv_device(conductor, zome, sample_bpv_device_2(conductor, zome).await).await.signed_action.hashed.hash,
+	  measures: vec![3],
+	  external_resistor_ohms: 3,
+    }
+}
+
+pub async fn create_measure_collection(conductor: &SweetConductor, zome: &SweetZome, measure_collection: MeasureCollection) -> Record {
+    let record: Record = conductor
+        .call(zome, "create_measure_collection", measure_collection)
+        .await;
+    record
+}
+

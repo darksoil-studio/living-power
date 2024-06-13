@@ -1,3 +1,5 @@
+import { MeasureCollection } from './types.js';
+
 import { BpvDevice } from './types.js';
 
 import { 
@@ -66,6 +68,37 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 
   async getAllBpvDevices(): Promise<Array<Link>> {
     return this.callZome('get_all_bpv_devices', undefined);
+  }
+  /** Measure Collection */
+
+  async createMeasureCollection(measureCollection: MeasureCollection): Promise<EntryRecord<MeasureCollection>> {
+    const record: Record = await this.callZome('create_measure_collection', measureCollection);
+    return new EntryRecord(record);
+  }
+  
+  async getMeasureCollection(measureCollectionHash: ActionHash): Promise<EntryRecord<MeasureCollection> | undefined> {
+    const record: Record = await this.callZome('get_measure_collection', measureCollectionHash);
+    return record ? new EntryRecord(record) : undefined;
+  }
+
+  deleteMeasureCollection(originalMeasureCollectionHash: ActionHash): Promise<ActionHash> {
+    return this.callZome('delete_measure_collection', originalMeasureCollectionHash);
+  }
+
+  getAllDeletesForMeasureCollection(originalMeasureCollectionHash: ActionHash): Promise<Array<SignedActionHashed<Delete>>> {
+    return this.callZome('get_all_deletes_for_measure_collection', originalMeasureCollectionHash);
+  }
+
+  getOldestDeleteForMeasureCollection(originalMeasureCollectionHash: ActionHash): Promise<SignedActionHashed<Delete> | undefined> {
+    return this.callZome('get_oldest_delete_for_measure_collection', originalMeasureCollectionHash);
+  }
+  
+  async getMeasureCollectionsForBpvDevice(bpvDeviceHash: ActionHash): Promise<Array<Link>> {
+    return this.callZome('get_measure_collections_for_bpv_device', bpvDeviceHash);
+  }
+
+  async getDeletedMeasureCollectionsForBpvDevice(bpvDeviceHash: ActionHash): Promise<Array<[SignedActionHashed<CreateLink>, SignedActionHashed<DeleteLink>[]]>> {
+    return this.callZome('get_deleted_measure_collections_for_bpv_device', bpvDeviceHash);
   }
 
 }

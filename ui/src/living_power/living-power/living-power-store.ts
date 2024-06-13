@@ -1,3 +1,5 @@
+import { MeasureCollection } from './types.js';
+
 import { BpvDevice } from './types.js';
 
 import { 
@@ -17,6 +19,7 @@ import { NewEntryAction, Record, ActionHash, EntryHash, AgentPubKey } from '@hol
 import { LivingPowerClient } from './living-power-client.js';
 
 export class LivingPowerStore {
+
   constructor(public client: LivingPowerClient) {}
   
   /** Bpv Device */
@@ -26,6 +29,25 @@ export class LivingPowerStore {
     original: immutableEntrySignal(() => this.client.getOriginalBpvDevice(bpvDeviceHash)),
     allRevisions: allRevisionsOfEntrySignal(this.client, () => this.client.getAllRevisionsForBpvDevice(bpvDeviceHash)),
     deletes: deletesForEntrySignal(this.client, bpvDeviceHash, () => this.client.getAllDeletesForBpvDevice(bpvDeviceHash)),
+    measureCollections: {
+      live: pipe(
+        liveLinksSignal(
+          this.client,
+          bpvDeviceHash,
+          () => this.client.getMeasureCollectionsForBpvDevice(bpvDeviceHash),
+          'BpvDeviceToMeasureCollections'
+        ), 
+        links => slice(this.measureCollections, links.map(l => l.target))
+      ),
+      deleted: pipe(
+        deletedLinksSignal(
+          this.client,
+          bpvDeviceHash,
+          () => this.client.getDeletedMeasureCollectionsForBpvDevice(bpvDeviceHash),
+          'BpvDeviceToMeasureCollections'
+        ), links => slice(this.measureCollections, links.map(l => l[0].hashed.content.target_address))
+      ),
+    },
   }));
   
   /** All Bpv Devices */
@@ -38,4 +60,11 @@ export class LivingPowerStore {
     ),
     allBpvDevices => slice(this.bpvDevices, allBpvDevices.map(l => l.target))
   );
+  /** Measure Collection */
+
+  measureCollections = new LazyHoloHashMap((measureCollectionHash: ActionHash) => ({
+    entry: immutableEntrySignal(() => this.client.getMeasureCollection(measureCollectionHash)),
+    deletes: deletesForEntrySignal(this.client, measureCollectionHash, () => this.client.getAllDeletesForMeasureCollection(measureCollectionHash)),
+  }));
+
 }

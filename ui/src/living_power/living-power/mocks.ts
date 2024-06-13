@@ -1,3 +1,5 @@
+import { MeasureCollection } from './types.js';
+
 import { BpvDevice } from './types.js';
 
 import {
@@ -118,6 +120,63 @@ export class LivingPowerZomeMock extends ZomeMock implements AppClient {
       create_link_hash: await fakeActionHash()
     })));
   }
+  /** Measure Collection */
+  measureCollections = new HoloHashMap<ActionHash, {
+    deletes: Array<SignedActionHashed<Delete>>;
+    revisions: Array<Record>;
+  }>();
+  measureCollectionsForBpvDevice = new HoloHashMap<ActionHash, Link[]>();
+
+  async create_measure_collection(measureCollection: MeasureCollection): Promise<Record> {
+    const entryHash = hash(measureCollection, HashType.ENTRY);
+    const record = await fakeRecord(await fakeCreateAction(entryHash), fakeEntry(measureCollection));
+    
+    this.measureCollections.set(record.signed_action.hashed.hash, {
+      deletes: [],
+      revisions: [record]
+    });
+  
+    const existingBpvDeviceHash = this.measureCollectionsForBpvDevice.get(measureCollection.bpv_device_hash) || [];
+    this.measureCollectionsForBpvDevice.set(measureCollection.bpv_device_hash, [...existingBpvDeviceHash, { 
+      target: record.signed_action.hashed.hash, 
+      author: this.myPubKey,
+      timestamp: Date.now() * 1000,
+      zome_index: 0,
+      link_type: 0,
+      tag: new Uint8Array(),
+      create_link_hash: await fakeActionHash()
+    }]);
+
+    return record;
+  }
+  
+  async get_measure_collection(measureCollectionHash: ActionHash): Promise<Record | undefined> {
+    const measureCollection = this.measureCollections.get(measureCollectionHash);
+    return measureCollection ? measureCollection.revisions[0] : undefined;
+  }
+  
+  async get_all_deletes_for_measure_collection(measureCollectionHash: ActionHash): Promise<Array<SignedActionHashed<Delete>> | undefined> {
+    const measureCollection = this.measureCollections.get(measureCollectionHash);
+    return measureCollection ? measureCollection.deletes : undefined;
+  }
+
+  async get_oldest_delete_for_measure_collection(measureCollectionHash: ActionHash): Promise<SignedActionHashed<Delete> | undefined> {
+    const measureCollection = this.measureCollections.get(measureCollectionHash);
+    return measureCollection ? measureCollection.deletes[0] : undefined;
+  }
+  async delete_measure_collection(original_measure_collection_hash: ActionHash): Promise<ActionHash> {
+    const record = await fakeRecord(await fakeDeleteEntry(original_measure_collection_hash));
+    
+    this.measureCollections.get(original_measureCollection_hash).deletes.push(record.signed_action as SignedActionHashed<Delete>);
+    
+    return record.signed_action.hashed.hash;
+  }
+
+  
+  async get_measure_collections_for_bpv_device(bpvDeviceHash: ActionHash): Promise<Array<Link>> {
+    return this.measureCollectionsForBpvDevice.get(bpvDeviceHash) || [];
+  }
+
 
 }
 
@@ -131,3 +190,14 @@ export async function sampleBpvDevice(client: LivingPowerClient, partialBpvDevic
     };
 }
 
+
+export async function sampleMeasureCollection(client: LivingPowerClient, partialMeasureCollection: Partial<MeasureCollection> = {}): Promise<MeasureCollection> {
+    return {
+        ...{
+          bpv_device_hash: partialMeasureCollection.bpv_device_hash || (await client.createBpvDevice(await sampleBpvDevice(client))).actionHash,
+          measures: [3],
+          external_resistor_ohms: 3,
+        },
+        ...partialMeasureCollection
+    };
+}

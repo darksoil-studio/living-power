@@ -1,3 +1,5 @@
+pub mod measure_collection;
+pub use measure_collection::*;
 pub mod bpv_device;
 pub use bpv_device::*;
 use hdi::prelude::*;
@@ -7,11 +9,13 @@ use hdi::prelude::*;
 #[unit_enum(UnitEntryTypes)]
 pub enum EntryTypes {
     BpvDevice(BpvDevice),
+    MeasureCollection(MeasureCollection),
 }
 #[derive(Serialize, Deserialize)]
 #[hdk_link_types]
 pub enum LinkTypes {
     AllBpvDevices,
+    BpvDeviceToMeasureCollections,
 }
 #[hdk_extern]
 pub fn genesis_self_check(
@@ -38,6 +42,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 bpv_device,
                             )
                         }
+                        EntryTypes::MeasureCollection(measure_collection) => {
+                            validate_create_measure_collection(
+                                EntryCreationAction::Create(action),
+                                measure_collection,
+                            )
+                        }
                     }
                 }
                 OpEntry::UpdateEntry { app_entry, action, .. } => {
@@ -46,6 +56,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                             validate_create_bpv_device(
                                 EntryCreationAction::Update(action),
                                 bpv_device,
+                            )
+                        }
+                        EntryTypes::MeasureCollection(measure_collection) => {
+                            validate_create_measure_collection(
+                                EntryCreationAction::Update(action),
+                                measure_collection,
                             )
                         }
                     }
@@ -76,6 +92,31 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                     };
                     match app_entry {
+                        EntryTypes::MeasureCollection(measure_collection) => {
+                            let original_app_entry = must_get_valid_record(
+                                action.clone().original_action_address,
+                            )?;
+                            let original_measure_collection = match MeasureCollection::try_from(
+                                original_app_entry,
+                            ) {
+                                Ok(entry) => entry,
+                                Err(e) => {
+                                    return Ok(
+                                        ValidateCallbackResult::Invalid(
+                                            format!(
+                                                "Expected to get MeasureCollection from Record: {e:?}"
+                                            ),
+                                        ),
+                                    );
+                                }
+                            };
+                            validate_update_measure_collection(
+                                action,
+                                measure_collection,
+                                original_create_action,
+                                original_measure_collection,
+                            )
+                        }
                         EntryTypes::BpvDevice(bpv_device) => {
                             let original_app_entry = must_get_valid_record(
                                 action.clone().original_action_address,
@@ -155,6 +196,13 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 }
             };
             match original_app_entry {
+                EntryTypes::MeasureCollection(original_measure_collection) => {
+                    validate_delete_measure_collection(
+                        delete_entry.clone().action,
+                        original_action,
+                        original_measure_collection,
+                    )
+                }
                 EntryTypes::BpvDevice(original_bpv_device) => {
                     validate_delete_bpv_device(
                         delete_entry.clone().action,
@@ -174,6 +222,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             match link_type {
                 LinkTypes::AllBpvDevices => {
                     validate_create_link_all_bpv_devices(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::BpvDeviceToMeasureCollections => {
+                    validate_create_link_bpv_device_to_measure_collections(
                         action,
                         base_address,
                         target_address,
@@ -200,6 +256,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         tag,
                     )
                 }
+                LinkTypes::BpvDeviceToMeasureCollections => {
+                    validate_delete_link_bpv_device_to_measure_collections(
+                        action,
+                        original_action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
             }
         }
         FlatOp::StoreRecord(store_record) => {
@@ -210,6 +275,12 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                             validate_create_bpv_device(
                                 EntryCreationAction::Create(action),
                                 bpv_device,
+                            )
+                        }
+                        EntryTypes::MeasureCollection(measure_collection) => {
+                            validate_create_measure_collection(
+                                EntryCreationAction::Create(action),
+                                measure_collection,
                             )
                         }
                     }
@@ -261,6 +332,39 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                     bpv_device,
                                     original_action,
                                     original_bpv_device,
+                                )
+                            } else {
+                                Ok(result)
+                            }
+                        }
+                        EntryTypes::MeasureCollection(measure_collection) => {
+                            let result = validate_create_measure_collection(
+                                EntryCreationAction::Update(action.clone()),
+                                measure_collection.clone(),
+                            )?;
+                            if let ValidateCallbackResult::Valid = result {
+                                let original_measure_collection: Option<
+                                    MeasureCollection,
+                                > = original_record
+                                    .entry()
+                                    .to_app_option()
+                                    .map_err(|e| wasm_error!(e))?;
+                                let original_measure_collection = match original_measure_collection {
+                                    Some(measure_collection) => measure_collection,
+                                    None => {
+                                        return Ok(
+                                            ValidateCallbackResult::Invalid(
+                                                "The updated entry type must be the same as the original entry type"
+                                                    .to_string(),
+                                            ),
+                                        );
+                                    }
+                                };
+                                validate_update_measure_collection(
+                                    action,
+                                    measure_collection,
+                                    original_action,
+                                    original_measure_collection,
                                 )
                             } else {
                                 Ok(result)
@@ -323,6 +427,13 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 original_bpv_device,
                             )
                         }
+                        EntryTypes::MeasureCollection(original_measure_collection) => {
+                            validate_delete_measure_collection(
+                                action,
+                                original_action,
+                                original_measure_collection,
+                            )
+                        }
                     }
                 }
                 OpRecord::CreateLink {
@@ -335,6 +446,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     match link_type {
                         LinkTypes::AllBpvDevices => {
                             validate_create_link_all_bpv_devices(
+                                action,
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
+                        LinkTypes::BpvDeviceToMeasureCollections => {
+                            validate_create_link_bpv_device_to_measure_collections(
                                 action,
                                 base_address,
                                 target_address,
@@ -368,6 +487,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     match link_type {
                         LinkTypes::AllBpvDevices => {
                             validate_delete_link_all_bpv_devices(
+                                action,
+                                create_link.clone(),
+                                base_address,
+                                create_link.target_address,
+                                create_link.tag,
+                            )
+                        }
+                        LinkTypes::BpvDeviceToMeasureCollections => {
+                            validate_delete_link_bpv_device_to_measure_collections(
                                 action,
                                 create_link.clone(),
                                 base_address,
