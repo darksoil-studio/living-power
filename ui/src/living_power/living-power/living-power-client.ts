@@ -61,5 +61,11 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
   getOldestDeleteForBpvDevice(originalBpvDeviceHash: ActionHash): Promise<SignedActionHashed<Delete> | undefined> {
     return this.callZome('get_oldest_delete_for_bpv_device', originalBpvDeviceHash);
   }
-  
+
+  /** All Bpv Devices */
+
+  async getAllBpvDevices(): Promise<Array<Link>> {
+    return this.callZome('get_all_bpv_devices', undefined);
+  }
+
 }

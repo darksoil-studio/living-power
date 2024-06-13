@@ -17,8 +17,6 @@ import { NewEntryAction, Record, ActionHash, EntryHash, AgentPubKey } from '@hol
 import { LivingPowerClient } from './living-power-client.js';
 
 export class LivingPowerStore {
-
-
   constructor(public client: LivingPowerClient) {}
   
   /** Bpv Device */
@@ -29,5 +27,15 @@ export class LivingPowerStore {
     allRevisions: allRevisionsOfEntrySignal(this.client, () => this.client.getAllRevisionsForBpvDevice(bpvDeviceHash)),
     deletes: deletesForEntrySignal(this.client, bpvDeviceHash, () => this.client.getAllDeletesForBpvDevice(bpvDeviceHash)),
   }));
+  
+  /** All Bpv Devices */
 
+  allBpvDevices = pipe(
+    collectionSignal(
+      this.client, 
+      () => this.client.getAllBpvDevices(),
+      'AllBpvDevices'
+    ),
+    allBpvDevices => slice(this.bpvDevices, allBpvDevices.map(l => l.target))
+  );
 }

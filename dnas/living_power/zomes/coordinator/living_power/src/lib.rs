@@ -1,12 +1,12 @@
+pub mod all_bpv_devices;
+
 pub mod bpv_device;
 use hdk::prelude::*;
 use living_power_integrity::*;
-// Called the first time a zome call is made to the cell containing this zome
 #[hdk_extern]
 pub fn init() -> ExternResult<InitCallbackResult> {
     Ok(InitCallbackResult::Pass)
 }
-// Don't modify this enum if you want the scaffolding tool to generate appropriate signals for your entries and links
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Signal {
@@ -17,18 +17,21 @@ pub enum Signal {
         original_app_entry: EntryTypes,
     },
     EntryDeleted { action: SignedActionHashed, original_app_entry: EntryTypes },
+    LinkCreated { action: SignedActionHashed, link_type: LinkTypes },
+    LinkDeleted {
+        action: SignedActionHashed,
+        create_link_action: SignedActionHashed,
+        link_type: LinkTypes,
+    },
 }
-// Whenever an action is committed, we emit a signal to the UI elements to reactively update them
 #[hdk_extern(infallible)]
 pub fn post_commit(committed_actions: Vec<SignedActionHashed>) {
-    // Don't modify this loop if you want the scaffolding tool to generate appropriate signals for your entries and links
     for action in committed_actions {
         if let Err(err) = signal_action(action) {
             error!("Error signaling new action: {:?}", err);
         }
     }
 }
-// Don't modify this function if you want the scaffolding tool to generate appropriate signals for your entries and links
 fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
     match action.hashed.content.clone() {
         Action::Create(_create) => {
@@ -64,6 +67,52 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
                 })?;
             }
             Ok(())
+        }
+        Action::CreateLink(create_link) => {
+            if let Ok(Some(link_type)) = LinkTypes::from_type(
+                create_link.zome_index,
+                create_link.link_type,
+            ) {
+                emit_signal(Signal::LinkCreated {
+                    action,
+                    link_type,
+                })?;
+            }
+            Ok(())
+        }
+        Action::DeleteLink(delete_link) => {
+            let record = get(
+                    delete_link.link_add_address.clone(),
+                    GetOptions::default(),
+                )?
+                .ok_or(
+                    wasm_error!(
+                        WasmErrorInner::Guest("Failed to fetch CreateLink action"
+                        .to_string())
+                    ),
+                )?;
+            match record.action() {
+                Action::CreateLink(create_link) => {
+                    if let Ok(Some(link_type)) = LinkTypes::from_type(
+                        create_link.zome_index,
+                        create_link.link_type,
+                    ) {
+                        emit_signal(Signal::LinkDeleted {
+                            action,
+                            link_type,
+                            create_link_action: record.signed_action.clone(),
+                        })?;
+                    }
+                    Ok(())
+                }
+                _ => {
+                    Err(
+                        wasm_error!(
+                            WasmErrorInner::Guest("Create Link should exist".to_string())
+                        ),
+                    )
+                }
+            }
         }
         _ => Ok(()),
     }
