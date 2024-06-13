@@ -1,0 +1,18 @@
+---
+manifest_version: "1"
+name: living-power
+description: ~
+roles:
+  - name: living_power
+    provisioning:
+      strategy: create
+      deferred: false
+    dna:
+      bundled: "../dnas/living_power/workdir/living_power.dna"
+      modifiers:
+        network_seed: ~
+        properties: ~
+        origin_time: ~
+        quantum_time: ~
+      installed_hash: ~
+      clone_limit: 0
