@@ -2,6 +2,8 @@
   description = "Template for Holochain app development";
 
   inputs = {
+    profiles.url = "github:holochain-open-dev/profiles/nixify";
+    p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard";
     versions.url = "github:holochain/holochain?dir=versions/0_3_rc";
 
     holochain.url = "github:holochain/holochain";
@@ -38,7 +40,18 @@
           , ...
           }: {
             devShells.default = pkgs.mkShell {
-              inputsFrom = [ 
+              inputsFrom = [
+              inputs'.p2p-shipyard.devShells.holochainTauriDev 
+                inputs'.hc-infra.devShells.synchronized-pnpm
+                inputs'.holochain.devShells.holonix
+              ];
+              packages = [
+                inputs'.scaffolding.packages.hc-scaffold-app-template
+              ];
+            };
+            devShells.androidDev = pkgs.mkShell {
+              inputsFrom = [
+              inputs'.p2p-shipyard.devShells.holochainTauriAndroidDev 
                 inputs'.hc-infra.devShells.synchronized-pnpm
                 inputs'.holochain.devShells.holonix
               ];

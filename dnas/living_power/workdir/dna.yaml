@@ -1,21 +1,31 @@
----
-manifest_version: "1"
+manifest_version: '1'
 name: living_power
 integrity:
-  network_seed: ~
-  properties: ~
+  network_seed: null
+  properties: null
   origin_time: 1718288816501186
   zomes:
-    - name: living_power_integrity
-      hash: ~
-      bundled: "../../../target/wasm32-unknown-unknown/release/living_power_integrity.wasm"
-      dependencies: ~
-      dylib: ~
+  - name: living_power_integrity
+    hash: null
+    bundled: ../../../target/wasm32-unknown-unknown/release/living_power_integrity.wasm
+    dependencies: null
+    dylib: null
+  - name: profiles_integrity
+    hash: null
+    bundled: <NIX_PACKAGE>
+    dependencies: null
+    dylib: null
 coordinator:
   zomes:
-    - name: living_power
-      hash: ~
-      bundled: "../../../target/wasm32-unknown-unknown/release/living_power.wasm"
-      dependencies:
-        - name: living_power_integrity
-      dylib: ~
+  - name: living_power
+    hash: null
+    bundled: ../../../target/wasm32-unknown-unknown/release/living_power.wasm
+    dependencies:
+    - name: living_power_integrity
+    dylib: null
+  - name: profiles
+    hash: null
+    bundled: <NIX_PACKAGE>
+    dependencies:
+    - name: profiles_integrity
+    dylib: null

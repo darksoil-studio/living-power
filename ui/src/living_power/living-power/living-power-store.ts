@@ -1,3 +1,5 @@
+import { BpvDevice } from './types.js';
+
 import { 
   collectionSignal, 
   liveLinksSignal, 
@@ -16,6 +18,16 @@ import { LivingPowerClient } from './living-power-client.js';
 
 export class LivingPowerStore {
 
+
   constructor(public client: LivingPowerClient) {}
   
+  /** Bpv Device */
+
+  bpvDevices = new LazyHoloHashMap((bpvDeviceHash: ActionHash) => ({
+    latestVersion: latestVersionOfEntrySignal(this.client, () => this.client.getLatestBpvDevice(bpvDeviceHash)),
+    original: immutableEntrySignal(() => this.client.getOriginalBpvDevice(bpvDeviceHash)),
+    allRevisions: allRevisionsOfEntrySignal(this.client, () => this.client.getAllRevisionsForBpvDevice(bpvDeviceHash)),
+    deletes: deletesForEntrySignal(this.client, bpvDeviceHash, () => this.client.getAllDeletesForBpvDevice(bpvDeviceHash)),
+  }));
+
 }

@@ -2,7 +2,7 @@
   "name": "ui",
   "version": "0.0.0",
   "scripts": {
-    "start": "vite --port $UI_PORT --clearScreen false",
+    "start": "vite --clearScreen false",
     "build": "vite build",
     "lint": "eslint src && prettier \"**/*.ts\" --check --ignore-path .gitignore",
     "format": "eslint src && prettier \"**/*.ts\" --write --ignore-path .gitignore",
@@ -21,7 +21,8 @@
     "@msgpack/msgpack": "^2.8.0",
     "@shoelace-style/shoelace": "^2.11.0",
     "lit": "^3.0.0",
-    "urlpattern-polyfill": "^10.0.0"
+    "urlpattern-polyfill": "^10.0.0",
+    "@holochain-open-dev/profiles": "github:holochain-open-dev/profiles#5dae01ec753b997f0b0adbdb5accf3a1b50d27e6&path:ui"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.9.4",
@@ -31,6 +32,7 @@
     "tslib": "^2.6.2",
     "vite": "^4.0.0",
     "vite-plugin-checker": "^0.5.3",
-    "vite-plugin-static-copy": "^0.13.0"
+    "vite-plugin-static-copy": "^0.13.0",
+    "internal-ip": "^7.0.0"
   }
 }
