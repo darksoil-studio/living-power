@@ -60,7 +60,7 @@ export class MeasurementCollectionDetail extends SignalWatcher(LitElement) {
 			);
 		} catch (e: unknown) {
 			console.error(e);
-			notifyError(msg('Error deleting the measure collection'));
+			notifyError(msg('Error deleting the measurement collection'));
 		}
 	}
 
@@ -104,7 +104,7 @@ export class MeasurementCollectionDetail extends SignalWatcher(LitElement) {
 				</div>`;
 			case 'error':
 				return html`<display-error
-					.headline=${msg('Error fetching the measure collection')}
+					.headline=${msg('Error fetching the measurement collection')}
 					.error=${measurementCollection.error}
 				></display-error>`;
 			case 'completed':

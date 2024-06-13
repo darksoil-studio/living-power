@@ -45,7 +45,7 @@ export class MeasurementCollectionsForBpvDevice extends SignalWatcher(
 					.src=${wrapPathInSvg(mdiInformationOutline)}
 				></sl-icon>
 				<span class="placeholder"
-					>${msg('No measure collections found for this bpv device')}</span
+					>${msg('No measurement collections found for this bpv device')}</span
 				>
 			</div>`;
 
@@ -75,7 +75,7 @@ export class MeasurementCollectionsForBpvDevice extends SignalWatcher(
 				</div>`;
 			case 'error':
 				return html`<display-error
-					.headline=${msg('Error fetching the measure collections')}
+					.headline=${msg('Error fetching the measurement collections')}
 					.error=${map.error}
 				></display-error>`;
 			case 'completed':

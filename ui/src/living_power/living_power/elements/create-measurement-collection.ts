@@ -32,7 +32,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { appStyles } from '../../../app-styles.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
-import { MeasurementCollection } from '../types.js';
+import { Measurement, MeasurementCollection } from '../types.js';
 
 /**
  * @element create-measurement-collection
@@ -48,10 +48,10 @@ export class CreateMeasurementCollection extends SignalWatcher(LitElement) {
 	bpvDeviceHash!: ActionHash;
 
 	/**
-	 * REQUIRED. The measures for this MeasurementCollection
+	 * REQUIRED. The measurements for this MeasurementCollection
 	 */
 	@property()
-	measures!: Array<number>;
+	measurements!: Array<Measurement>;
 
 	/**
 	 * @internal
@@ -76,14 +76,14 @@ export class CreateMeasurementCollection extends SignalWatcher(LitElement) {
 			throw new Error(
 				'Cannot create a new Measurement Collection without its bpv_device_hash field',
 			);
-		if (this.measures === undefined)
+		if (this.measurements === undefined)
 			throw new Error(
-				'Cannot create a new Measurement Collection without its measures field',
+				'Cannot create a new Measurement Collection without its measurements field',
 			);
 
 		const measurementCollection: MeasurementCollection = {
 			bpv_device_hash: this.bpvDeviceHash!,
-			measures: this.measures!,
+			measurements: this.measurements!,
 			external_resistor_ohms: fields.external_resistor_ohms!,
 		};
 
@@ -107,7 +107,7 @@ export class CreateMeasurementCollection extends SignalWatcher(LitElement) {
 			this.form.reset();
 		} catch (e: unknown) {
 			console.error(e);
-			notifyError(msg('Error creating the measure collection'));
+			notifyError(msg('Error creating the measurement collection'));
 		}
 		this.committing = false;
 	}

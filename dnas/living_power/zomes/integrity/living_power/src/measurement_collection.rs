@@ -1,11 +1,22 @@
 use hdi::prelude::*;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Measurement {
+    pub timestamp: Timestamp,
+    pub humidity_percentage: u32,
+    pub temperature_celsius: u32,
+    pub light_level_lux: u32,
+    pub votage_millivolts: u32,
+}
+
 #[hdk_entry_helper]
 #[derive(Clone, PartialEq)]
 pub struct MeasurementCollection {
     pub bpv_device_hash: ActionHash,
-    pub measures: Vec<u32>,
+    pub measurements: Vec<Measurement>,
     pub external_resistor_ohms: u32,
 }
+
 pub fn validate_create_measurement_collection(
     _action: EntryCreationAction,
     measurement_collection: MeasurementCollection,

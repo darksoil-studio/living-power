@@ -103,8 +103,8 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 	async getAllBpvDevices(): Promise<Array<Link>> {
 		return this.callZome('get_all_bpv_devices', undefined);
 	}
-	/** Measurement Collection */
 
+	/** Measurement Collection */
 	async createMeasurementCollection(
 		measurementCollection: MeasurementCollection,
 	): Promise<EntryRecord<MeasurementCollection>> {

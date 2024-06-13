@@ -281,7 +281,15 @@ export async function sampleMeasurementCollection(
 				partialMeasurementCollection.bpv_device_hash ||
 				(await client.createBpvDevice(await sampleBpvDevice(client)))
 					.actionHash,
-			measures: [3],
+			measurements: [
+				{
+					humidity_percentage: 40,
+					light_level_lux: 20,
+					temperature_centigrades: 10,
+					timestamp: Date.now() * 1000,
+					voltage_millivolts: 300,
+				},
+			],
 			external_resistor_ohms: 3,
 		},
 		...partialMeasurementCollection,

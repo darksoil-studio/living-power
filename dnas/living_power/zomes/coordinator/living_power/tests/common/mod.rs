@@ -41,7 +41,13 @@ pub async fn sample_measurement_collection_1(
         .signed_action
         .hashed
         .hash,
-        measurements: vec![10],
+        measurements: vec![Measurement {
+            timestamp: Timestamp::now(),
+            humidity_percentage: 30,
+            temperature_celsius: 20,
+            light_level_lux: 10,
+            votage_millivolts: 300,
+        }],
         external_resistor_ohms: 10,
     }
 }
@@ -60,7 +66,13 @@ pub async fn sample_measurement_collection_2(
         .signed_action
         .hashed
         .hash,
-        measurements: vec![3],
+        measurements: vec![Measurement {
+            timestamp: Timestamp::now(),
+            humidity_percentage: 20,
+            temperature_celsius: 30,
+            light_level_lux: 14,
+            votage_millivolts: 330,
+        }],
         external_resistor_ohms: 3,
     }
 }
