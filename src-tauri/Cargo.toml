@@ -31,3 +31,6 @@ url2 = "0.0.6"
 app_dirs2 = "2.5.5"
 tempdir = "0.3.7"
 anyhow = "1"
+
+mountpoints = "0.2"
+serialport = "4.3"
