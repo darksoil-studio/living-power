@@ -12,53 +12,35 @@
     nixpkgs.follows = "holochain/nixpkgs";
     flake-parts.follows = "holochain/flake-parts";
 
-    hc-infra = {
-      url = "github:holochain-open-dev/infrastructure";
-    };
-    scaffolding = {
-      url = "github:holochain-open-dev/templates";
-    };
+    hc-infra = { url = "github:holochain-open-dev/infrastructure"; };
+    scaffolding = { url = "github:holochain-open-dev/templates"; };
 
   };
 
   outputs = inputs:
-    inputs.flake-parts.lib.mkFlake
-      {
-        inherit inputs;
-      }
-      {
-        imports = [
-          ./happ.nix
-        ];
-      
-        systems = builtins.attrNames inputs.holochain.devShells;
-        perSystem =
-          { inputs'
-          , config
-          , pkgs
-          , system
-          , ...
-          }: {
-            devShells.default = pkgs.mkShell {
-              inputsFrom = [
-              inputs'.p2p-shipyard.devShells.holochainTauriDev 
-                inputs'.hc-infra.devShells.synchronized-pnpm
-                inputs'.holochain.devShells.holonix
-              ];
-              packages = [
-                inputs'.scaffolding.packages.hc-scaffold-app-template
-              ];
-            };
-            devShells.androidDev = pkgs.mkShell {
-              inputsFrom = [
-              inputs'.p2p-shipyard.devShells.holochainTauriAndroidDev 
-                inputs'.hc-infra.devShells.synchronized-pnpm
-                inputs'.holochain.devShells.holonix
-              ];
-              packages = [
-                inputs'.scaffolding.packages.hc-scaffold-app-template
-              ];
-            };
-          };
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ ./happ.nix ];
+
+      systems = builtins.attrNames inputs.holochain.devShells;
+      perSystem = { inputs', config, pkgs, system, ... }: {
+        devShells.default = pkgs.mkShell {
+          inputsFrom = [
+            inputs'.p2p-shipyard.devShells.holochainTauriDev
+            inputs'.hc-infra.devShells.synchronized-pnpm
+            inputs'.holochain.devShells.holonix
+          ];
+          packages =
+            [ inputs'.scaffolding.packages.hc-scaffold-app-template pkgs.udev ];
+        };
+        devShells.androidDev = pkgs.mkShell {
+          inputsFrom = [
+            inputs'.p2p-shipyard.devShells.holochainTauriAndroidDev
+            inputs'.hc-infra.devShells.synchronized-pnpm
+            inputs'.holochain.devShells.holonix
+          ];
+          packages =
+            [ inputs'.scaffolding.packages.hc-scaffold-app-template pkgs.udev ];
+        };
       };
+    };
 }

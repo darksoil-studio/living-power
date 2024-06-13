@@ -40,9 +40,10 @@
         holochain = inputs'.holochain;
       });
       crateCargoToml = ./Cargo.toml;
-      buildInputs = inputs.p2p-shipyard.outputs.lib.tauriHappDeps.buildInputs {
-        inherit pkgs lib;
-      };
+      buildInputs = [ pkgs.udev ]
+        ++ inputs.p2p-shipyard.outputs.lib.tauriHappDeps.buildInputs {
+          inherit pkgs lib;
+        };
       nativeBuildInputs =
         inputs.p2p-shipyard.outputs.lib.tauriHappDeps.nativeBuildInputs {
           inherit pkgs lib;
