@@ -373,7 +373,7 @@ dependencies = [
  "futures-io",
  "futures-lite 2.3.0",
  "parking",
- "polling 3.7.1",
+ "polling 3.7.2",
  "rustix 0.38.34",
  "slab",
  "tracing",
@@ -1693,15 +1693,15 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "0.99.17"
+version = "0.99.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
+checksum = "5f33878137e4dafd7fa914ad4e259e18a4e8e532b9617a2d0150262bf53abfce"
 dependencies = [
  "convert_case",
  "proc-macro2 1.0.85",
  "quote 1.0.36",
  "rustc_version",
- "syn 1.0.109",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -3047,6 +3047,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
 
 [[package]]
+name = "hermit-abi"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbf6a919d6cf397374f7dfeeea91d974c7c0a7221d0d0f4f20d859d329e53fcc"
+
+[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3222,9 +3228,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_client"
-version = "0.5.0-rc.4"
+version = "0.5.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1edd7fb6a7835e0a56c588b9b0e9ff5073a2eeff7d21a48e8efe19b25806ecad"
+checksum = "749b6cdb1a99d0054b59f88907abb4ca8c2e1b57496e324a368b62179785bb6f"
 dependencies = [
  "again",
  "anyhow",
@@ -3836,9 +3842,9 @@ dependencies = [
 
 [[package]]
 name = "httparse"
-version = "1.9.3"
+version = "1.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0e7a4dd27b9476dc40cb050d3632d3bba3a70ddbff012285f7f8559a1e7e545"
+checksum = "0fcc0b4a115bf80b728eb8ea024ad5bd707b615bfed49e0665b6e0f86fd082d9"
 
 [[package]]
 name = "httpdate"
@@ -5080,11 +5086,15 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "app_dirs2",
+ "chrono",
  "holochain_client",
  "holochain_types",
  "lair_keystore",
+ "living_power_integrity",
  "log",
  "mountpoints",
+ "regex",
+ "serde",
  "serialport",
  "tauri",
  "tauri-build",
@@ -5266,9 +5276,9 @@ dependencies = [
 
 [[package]]
 name = "memchr"
-version = "2.7.2"
+version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
+checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "memmap2"
@@ -6147,7 +6157,7 @@ checksum = "1e401f977ab385c9e4e3ab30627d6f26d00e2c73eef317493c4ec6d468726cf8"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
- "redox_syscall 0.5.1",
+ "redox_syscall 0.5.2",
  "smallvec",
  "windows-targets 0.52.5",
 ]
@@ -6462,13 +6472,13 @@ dependencies = [
 
 [[package]]
 name = "polling"
-version = "3.7.1"
+version = "3.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e6a007746f34ed64099e88783b0ae369eaa3da6392868ba262e2af9b8fbaea1"
+checksum = "a3ed00ed3fbf728b5816498ecd316d1716eecaced9c0c8d2c5a6740ca214985b"
 dependencies = [
  "cfg-if 1.0.0",
  "concurrent-queue",
- "hermit-abi 0.3.9",
+ "hermit-abi 0.4.0",
  "pin-project-lite",
  "rustix 0.38.34",
  "tracing",
@@ -7159,9 +7169,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "469052894dcb553421e483e4209ee581a45100d31b4018de03e5a7ad86374a7e"
+checksum = "c82cf8cff14456045f55ec4241383baeff27af886adb72ffb2162f99911de0fd"
 dependencies = [
  "bitflags 2.5.0",
 ]
@@ -7682,9 +7692,9 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "safe_arch"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f398075ce1e6a179b46f51bd88d0598b92b00d3551f1a2d4ac49e771b56ac354"
+checksum = "c3460605018fdc9612bce72735cba0d27efbcd9904780d44c7e3a9948f96148a"
 dependencies = [
  "bytemuck",
 ]
@@ -8042,6 +8052,7 @@ dependencies = [
  "nix 0.26.4",
  "regex",
  "scopeguard",
+ "serde",
  "unescaper",
  "winapi 0.3.9",
 ]
@@ -8265,7 +8276,7 @@ dependencies = [
  "objc2-foundation",
  "objc2-quartz-core",
  "raw-window-handle 0.6.2",
- "redox_syscall 0.5.1",
+ "redox_syscall 0.5.2",
  "wasm-bindgen",
  "wayland-sys",
  "web-sys",
@@ -8883,7 +8894,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-holochain"
 version = "0.0.0"
-source = "git+https://github.com/darksoil-studio/p2p-shipyard?branch=main#a8b4bb167cc147b5d414635aeb7dde278bdf1a29"
+source = "git+https://github.com/darksoil-studio/p2p-shipyard?branch=main#7cb0c29dd1505e9b827d7a9c08e6d575176e5e9d"
 dependencies = [
  "async-std",
  "bzip2",

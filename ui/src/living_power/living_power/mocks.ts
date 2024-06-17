@@ -285,7 +285,7 @@ export async function sampleMeasurementCollection(
 				{
 					humidity_percentage: 40,
 					light_level_lux: 20,
-					temperature_centigrades: 10,
+					temperature_celsius: 10,
 					timestamp: Date.now() * 1000,
 					voltage_millivolts: 300,
 				},

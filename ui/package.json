@@ -11,28 +11,32 @@
     "localize:build": "lit-localize build"
   },
   "dependencies": {
-    "@holochain/client": "^0.17.0-rc",
     "@holochain-open-dev/elements": "^0.300.0-rc.3",
+    "@holochain-open-dev/profiles": "github:holochain-open-dev/profiles#5dae01ec753b997f0b0adbdb5accf3a1b50d27e6&path:ui",
     "@holochain-open-dev/signals": "^0.300.0-rc",
     "@holochain-open-dev/utils": "^0.300.0-rc",
+    "@holochain/client": "^0.17.0-rc",
     "@lit/context": "^1.0.0",
     "@lit/localize": "^0.12.0",
     "@mdi/js": "^7.2.0",
     "@msgpack/msgpack": "^2.8.0",
     "@shoelace-style/shoelace": "^2.11.0",
+    "@tauri-apps/api": "^2.0.0-beta",
     "lit": "^3.0.0",
-    "urlpattern-polyfill": "^10.0.0",
-    "@holochain-open-dev/profiles": "github:holochain-open-dev/profiles#5dae01ec753b997f0b0adbdb5accf3a1b50d27e6&path:ui"
+    "lodash-es": "^4.17.21",
+    "urlpattern-polyfill": "^10.0.0"
   },
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.9.4",
     "@lit/localize-tools": "^0.6.3",
+    "@types/lodash-es": "^4.17.12",
     "bestzip": "^2.2.0",
-    "typescript": "^5.4.5",
+    "internal-ip": "^7.0.0",
     "tslib": "^2.6.2",
+    "typescript": "^5.4.5",
     "vite": "^4.0.0",
     "vite-plugin-checker": "^0.5.3",
-    "vite-plugin-static-copy": "^0.13.0",
-    "internal-ip": "^7.0.0"
-  }
+    "vite-plugin-static-copy": "^0.13.0"
+  },
+  "type": "module"
 }

@@ -104,9 +104,15 @@ importers:
       '@shoelace-style/shoelace':
         specifier: ^2.11.0
         version: 2.15.1(@types/react@18.3.3)
+      '@tauri-apps/api':
+        specifier: ^2.0.0-beta
+        version: 2.0.0-beta.13
       lit:
         specifier: ^3.0.0
         version: 3.1.4
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       urlpattern-polyfill:
         specifier: ^10.0.0
         version: 10.0.0
@@ -117,6 +123,9 @@ importers:
       '@lit/localize-tools':
         specifier: ^0.6.3
         version: 0.6.10
+      '@types/lodash-es':
+        specifier: ^4.17.12
+        version: 4.17.12
       bestzip:
         specifier: ^2.2.0
         version: 2.2.1
@@ -741,6 +750,10 @@ packages:
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
 
+  '@tauri-apps/api@2.0.0-beta.13':
+    resolution: {integrity: sha512-Np1opKANzRMF3lgJ9gDquBCB9SxlE2lRmNpVx1+L6RyzAmigkuh0ZulT5jMnDA3JLsuSDU135r/s4t/Pmx4atg==}
+    engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
+
   '@tauri-apps/cli-darwin-arm64@2.0.0-beta.20':
     resolution: {integrity: sha512-oCJOCib7GuYkwkBXx+ekamR8NZZU+2i3MLP+DHpDxK5gS2uhCE+CBkamJkNt6y1x6xdVnwyqZOm5RvN4SRtyIA==}
     engines: {node: '>= 10'}
@@ -817,6 +830,12 @@ packages:
 
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
+
+  '@types/lodash-es@4.17.12':
+    resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
+
+  '@types/lodash@4.17.5':
+    resolution: {integrity: sha512-MBIOHVZqVqgfro1euRDWX7OO0fBVUUMrN6Pwm8LQsz8cWhEpihlvR70ENj3f40j58TNxZaWv2ndSkInykNBBJw==}
 
   '@types/minimist@1.2.5':
     resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
@@ -3064,6 +3083,8 @@ snapshots:
 
   '@sinclair/typebox@0.27.8': {}
 
+  '@tauri-apps/api@2.0.0-beta.13': {}
+
   '@tauri-apps/cli-darwin-arm64@2.0.0-beta.20':
     optional: true
 
@@ -3120,6 +3141,12 @@ snapshots:
       - supports-color
 
   '@types/estree@1.0.5': {}
+
+  '@types/lodash-es@4.17.12':
+    dependencies:
+      '@types/lodash': 4.17.5
+
+  '@types/lodash@4.17.5': {}
 
   '@types/minimist@1.2.5': {}
 

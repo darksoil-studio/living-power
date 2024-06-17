@@ -2,9 +2,12 @@ use holochain_types::prelude::AppBundle;
 use lair_keystore::dependencies::sodoken::{BufRead, BufWrite};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tauri_plugin_holochain::{HolochainPluginConfig, HolochainExt};
-use url2::Url2;
 use tauri::AppHandle;
+use tauri_plugin_holochain::{HolochainExt, HolochainPluginConfig};
+use url2::Url2;
+
+mod arduino;
+mod collect_measurements;
 
 const APP_ID: &'static str = "living-power";
 const PRODUCTION_SIGNAL_URL: &'static str = "wss://signal.holo.host";
@@ -31,15 +34,22 @@ pub fn run() {
                 holochain_dir: holochain_dir(),
             },
         ))
+        .invoke_handler(tauri::generate_handler![
+            arduino::list_connected_arduinos,
+            collect_measurements::collect_measurements
+        ])
         .setup(|app| {
             let handle = app.handle().clone();
-            tauri::async_runtime::block_on(async move {
-                setup(handle).await
-            })?;
+            tauri::async_runtime::block_on(async move { setup(handle).await })?;
 
             // After set up we can be sure our app is installed and up to date, so we can just open it
             app.holochain()?
-                .main_window_builder(String::from("main"), false, Some(String::from("living-power")), None)?
+                .main_window_builder(
+                    String::from("main"),
+                    false,
+                    Some(String::from("living-power")),
+                    None,
+                )?
                 .build()?;
 
             Ok(())
@@ -67,20 +77,15 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
     if installed_apps.len() == 0 {
         handle
             .holochain()?
-            .install_app(
-                String::from(APP_ID),
-                happ_bundle(),
-                HashMap::new(),
-                None,
-            )
+            .install_app(String::from(APP_ID), happ_bundle(), HashMap::new(), None)
             .await?;
 
         Ok(())
     } else {
-        handle.holochain()?.update_app_if_necessary(
-            String::from(APP_ID),
-            happ_bundle()
-        ).await?;
+        handle
+            .holochain()?
+            .update_app_if_necessary(String::from(APP_ID), happ_bundle())
+            .await?;
 
         Ok(())
     }
@@ -118,7 +123,8 @@ fn signal_url() -> Url2 {
 
 fn holochain_dir() -> PathBuf {
     if tauri::is_dev() {
-        let tmp_dir = tempdir::TempDir::new("living-power").expect("Could not create temporary directory");
+        let tmp_dir =
+            tempdir::TempDir::new("living-power").expect("Could not create temporary directory");
 
         // Convert `tmp_dir` into a `Path`, destroying the `TempDir`
         // without deleting the directory.

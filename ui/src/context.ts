@@ -1,5 +1,10 @@
-import { Router } from "@holochain-open-dev/elements";
-import { createContext } from "@lit/context";
+import { Router } from '@holochain-open-dev/elements';
+import { AsyncSignal } from '@holochain-open-dev/signals';
+import { createContext } from '@lit/context';
 
-export const rootRouterContext = createContext<Router>("router");
+import { SerialPortInfo } from './arduinos/connected-arduinos';
 
+export const rootRouterContext = createContext<Router>('router');
+
+export const connectedArduinosContext =
+	createContext<AsyncSignal<Array<SerialPortInfo>>>('connectedArduinos');

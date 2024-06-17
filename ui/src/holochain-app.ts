@@ -21,11 +21,13 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import { appStyles } from './app-styles.js';
-import { rootRouterContext } from './context.js';
-import './home-page.ts';
-import { livingPowerStoreContext } from './living_power/living-power/context.js';
-import { LivingPowerClient } from './living_power/living-power/living-power-client.js';
-import { LivingPowerStore } from './living_power/living-power/living-power-store.js';
+import { collectMeasurements } from './arduinos/collect-measurements.js';
+import { connectedArduinos } from './arduinos/connected-arduinos.js';
+import { connectedArduinosContext, rootRouterContext } from './context.js';
+import './home-page.js';
+import { livingPowerStoreContext } from './living_power/living_power/context.js';
+import { LivingPowerClient } from './living_power/living_power/living-power-client.js';
+import { LivingPowerStore } from './living_power/living_power/living-power-store.js';
 
 @localized()
 @customElement('holochain-app')
@@ -64,6 +66,9 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 		},
 	]);
 
+	@provide({ context: connectedArduinosContext })
+	_connectedArduinos = connectedArduinos();
+
 	async firstUpdated() {
 		try {
 			this._client = await AppWebsocket.connect();
@@ -78,10 +83,7 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 	// Don't change this
 	async initStores(appClient: AppClient) {
 		this._profilesStore = new ProfilesStore(
-			new ProfilesClient(
-				appClient,
-				'TODO:REPLACE_ME_WITH_THE_DNA_WITH_THE_PROFILES_ZOME',
-			),
+			new ProfilesClient(appClient, 'living_power'),
 		);
 		this._livingPowerStore = new LivingPowerStore(
 			new LivingPowerClient(appClient, 'living_power'),
@@ -104,7 +106,17 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 		`;
 	}
 
+	thething() {
+		const result = this._connectedArduinos.get();
+		if (result.status === 'completed') {
+			if (result.value.length > 0) {
+				collectMeasurements(result.value[0].port_name);
+			}
+		}
+	}
+
 	render() {
+		this.thething();
 		if (this._loading)
 			return html`<div
 				class="row"

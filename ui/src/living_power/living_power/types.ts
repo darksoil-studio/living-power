@@ -17,7 +17,7 @@ export interface BpvDevice {
 export interface Measurement {
 	timestamp: number;
 	humidity_percentage: number;
-	temperature_centigrades: number;
+	temperature_celsius: number;
 	light_level_lux: number;
 	voltage_millivolts: number;
 }

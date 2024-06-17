@@ -27,10 +27,12 @@
           inputsFrom = [
             inputs'.p2p-shipyard.devShells.holochainTauriDev
             inputs'.hc-infra.devShells.synchronized-pnpm
-            inputs'.holochain.devShells.holonix
           ];
-          packages =
-            [ inputs'.scaffolding.packages.hc-scaffold-app-template pkgs.udev ];
+          packages = [
+            pkgs.arduino-ide
+            inputs'.scaffolding.packages.hc-scaffold-app-template
+            pkgs.udev
+          ];
         };
         devShells.androidDev = pkgs.mkShell {
           inputsFrom = [

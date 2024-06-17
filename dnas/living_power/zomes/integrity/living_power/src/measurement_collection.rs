@@ -6,7 +6,7 @@ pub struct Measurement {
     pub humidity_percentage: u32,
     pub temperature_celsius: u32,
     pub light_level_lux: u32,
-    pub votage_millivolts: u32,
+    pub voltage_millivolts: u32,
 }
 
 #[hdk_entry_helper]

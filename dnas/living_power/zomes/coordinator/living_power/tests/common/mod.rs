@@ -46,7 +46,7 @@ pub async fn sample_measurement_collection_1(
             humidity_percentage: 30,
             temperature_celsius: 20,
             light_level_lux: 10,
-            votage_millivolts: 300,
+            voltage_millivolts: 300,
         }],
         external_resistor_ohms: 10,
     }
@@ -71,7 +71,7 @@ pub async fn sample_measurement_collection_2(
             humidity_percentage: 20,
             temperature_celsius: 30,
             light_level_lux: 14,
-            votage_millivolts: 330,
+            voltage_millivolts: 330,
         }],
         external_resistor_ohms: 3,
     }
