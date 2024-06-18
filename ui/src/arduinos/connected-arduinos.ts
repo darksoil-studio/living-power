@@ -8,10 +8,10 @@ export interface SerialPortInfo {
 }
 export type PortType = {
 	UsbPort: {
-		manufacturer: String;
+		manufacturer: string;
 		pid: number;
-		product: String;
-		serial_number: String;
+		product: string;
+		serial_number: string;
 		vid: number;
 	};
 };

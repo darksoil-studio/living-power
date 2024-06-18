@@ -92,25 +92,27 @@ void setup() {
   // analogReadCorrection(5,)  Analog correction 
 }
 
-void sendMeasurements() {
+void sendMeasurementsIfRequested() {
   if (Serial.available() > 0) {
       char rc = Serial.read();
       if (rc == 'c') {
-
         File dataFile = SD.open(fileName, FILE_READ);
 
         while (dataFile.available()) {
-          Serial.println(dataFile.readStringUntil('\n'));
+          char buf[4096];
+          int bytes = dataFile.read(buf, 4096);
+          Serial.write(buf, bytes);
+          //Serial.write(dataFile.read());
         }
+        Serial.println("");
         Serial.println("EndOfFile");
-
-                //Serial.write("asdf");
+        dataFile.close();
       }
   }
 }
 
 void loop() {
-  sendMeasurements();
+  sendMeasurementsIfRequested();
  
   // Read sensor data
   float temperature = ENV.readTemperature();
@@ -138,7 +140,7 @@ void loop() {
   //LowPower.deepSleep(loggingInterval); 
 
   // Enter sleep mode for 1 minute
-  // delay(1000); // Wait for 1 second to ensure any remaining data logging is completed
+  //delay(10); // Wait for 1 second to ensure any remaining data logging is completed
   //LowPower.attachInterruptWakeup(13, callback, CHANGE);
   //LowPower.deepSleep(10000); // Enter sleep mode for 59 seconds
 }

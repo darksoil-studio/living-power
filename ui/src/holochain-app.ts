@@ -8,9 +8,14 @@ import {
 } from '@holochain-open-dev/profiles';
 import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
 import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
-import { SignalWatcher } from '@holochain-open-dev/signals';
+import { SignalWatcher, joinAsync } from '@holochain-open-dev/signals';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { ActionHash, AppClient, AppWebsocket } from '@holochain/client';
+import {
+	ActionHash,
+	AppClient,
+	AppWebsocket,
+	encodeHashToBase64,
+} from '@holochain/client';
 import { provide } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
@@ -26,6 +31,7 @@ import { connectedArduinos } from './arduinos/connected-arduinos.js';
 import { connectedArduinosContext, rootRouterContext } from './context.js';
 import './home-page.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';
+import './living_power/living_power/elements/new-bpv-device-connected-dialog.js';
 import { LivingPowerClient } from './living_power/living_power/living-power-client.js';
 import { LivingPowerStore } from './living_power/living_power/living-power-store.js';
 
@@ -66,9 +72,6 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 		},
 	]);
 
-	@provide({ context: connectedArduinosContext })
-	_connectedArduinos = connectedArduinos();
-
 	async firstUpdated() {
 		try {
 			this._client = await AppWebsocket.connect();
@@ -106,17 +109,7 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 		`;
 	}
 
-	thething() {
-		const result = this._connectedArduinos.get();
-		if (result.status === 'completed') {
-			if (result.value.length > 0) {
-				collectMeasurements(result.value[0].port_name);
-			}
-		}
-	}
-
 	render() {
-		this.thething();
 		if (this._loading)
 			return html`<div
 				class="row"
@@ -139,9 +132,13 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 			`;
 
 		return html`
-			<profile-prompt style="flex: 1;">
-				${this.router.outlet()}
-			</profile-prompt>
+			<new-bpv-device-connected-dialog
+				@bpv-device-created=${(e: CustomEvent) =>
+					this.router.goto(
+						`home/bpv-devices/${encodeHashToBase64(e.detail.bpvDeviceHash)}`,
+					)}
+			></new-bpv-device-connected-dialog>
+			${this.router.outlet()}
 		`;
 	}
 

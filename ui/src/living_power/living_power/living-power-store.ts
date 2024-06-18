@@ -24,12 +24,15 @@ import {
 	Record,
 } from '@holochain/client';
 
+import { connectedArduinos } from '../../arduinos/connected-arduinos.js';
 import { LivingPowerClient } from './living-power-client.js';
 import { MeasurementCollection } from './types.js';
 import { BpvDevice } from './types.js';
 
 export class LivingPowerStore {
 	constructor(public client: LivingPowerClient) {}
+
+	connectedArduinos = connectedArduinos();
 
 	/** Bpv Device */
 

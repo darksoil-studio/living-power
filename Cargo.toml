@@ -9,14 +9,14 @@ members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*", "src-tauri"
 resolver = "2"
 
 [workspace.dependencies]
-hdi = "=0.4.1-rc.1"
-hdk = "=0.3.1-rc.1"
+hdi = "=0.4.1"
+hdk = "=0.3.1"
 serde = "1.0"
 
 [workspace.dependencies.holochain]
 default-features = false
 features = ["test_utils"]
-version = "0.3.1-rc.1"
+version = "0.3.1"
 
 [workspace.dependencies.living_power]
 path = "dnas/living_power/zomes/coordinator/living_power"
