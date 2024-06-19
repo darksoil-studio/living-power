@@ -41,11 +41,13 @@ bool woke = false;
 
 const int sampleSize = 31;
 RunningMedian samples = RunningMedian(sampleSize);
+const int pin = 0;
 
 void setup() {
 
   Serial.begin(9600);
   while(!Serial);
+  //pinMode(pin, INPUT_PULLUP);
 
   // WiFi.end();
 
@@ -90,7 +92,9 @@ void setup() {
     Serial.println("Failed to open file for data logging!");
     while (1);
   }
-  dataFile.println("Date,Time,Temperature (C),Humidity (%),Light Level (lux),Voltage");
+  if (dataFile.size() < 10) { // Only print headers if file is empty
+    dataFile.println("Date,Time,Temperature (C),Humidity (%),Light Level (lux),Voltage");
+  }
   dataFile.close();
 
   // Setting voltage 
@@ -126,9 +130,16 @@ void sendMeasurements() {
   dataFile.close();
 }
 
+// Will not finish until the computer is disconnected
 void syncWithComputer() {
-  if (Serial.available() > 0) {
+  //Serial.begin(9600);
+  //int now = rtc.getSeconds();
+
+  while (Serial.available() > 0) {
     char rc = Serial.read();
+    while (rc == 'p') {
+      rc = Serial.read();
+    }
     if (rc == 'c') {
       Serial.print("BEGIN_C");
       sendMeasurements();
@@ -136,12 +147,14 @@ void syncWithComputer() {
       Serial.print("BEGIN_L");
       sendLastMeasurement();
     }
+
+    delay(100);
   }
 }
 
 void loop() {
   syncWithComputer();
- 
+
   // Read sensor data
   float temperature = ENV.readTemperature();
   float humidity = ENV.readHumidity();
@@ -167,14 +180,11 @@ void loop() {
   // Enter sleep mode
   //LowPower.deepSleep(loggingInterval); 
 
+  Serial.end();
   // Enter sleep mode for 1 minute
-  delay(60000); // Wait for 1 second to ensure any remaining data logging is completed
-  //LowPower.attachInterruptWakeup(13, callback, CHANGE);
-  //LowPower.deepSleep(10000); // Enter sleep mode for 59 seconds
-}
-
-void callback() {
-  woke = true;
+    //delay(60000); // Wait for 1 second to ensure any remaining data logging is completed
+  //LowPower.attachInterruptWakeup(pin, syncWithComputer, CHANGE); 
+  LowPower.deepSleep(60000); // Enter sleep mode for 59 seconds
 }
 
 void logData(float temperature, float humidity, float lightLevel, float voltage) {

@@ -30,6 +30,7 @@ import { SerialPortInfo } from './arduinos/connected-arduinos.js';
 import { rootRouterContext } from './context.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';
 import './living_power/living_power/elements/bpv-device-detail.js';
+import './living_power/living_power/elements/bpv-device-measurements.js';
 import './living_power/living_power/elements/collect-measurements-alert.js';
 import './living_power/living_power/elements/new-arduino-connected-alert.js';
 import { LivingPowerStore } from './living_power/living_power/living-power-store.js';
@@ -84,9 +85,10 @@ export class HomePage extends SignalWatcher(LitElement) {
 		{
 			path: 'bpv-devices/:bpvDeviceHash',
 			render: params =>
-				html`<bpv-device-detail
+				html`<bpv-device-measurements
+					style="flex: 1"
 					.bpvDeviceHash=${decodeHashFromBase64(params.bpvDeviceHash!)}
-				></bpv-device-detail>`,
+				></bpv-device-measurements>`,
 		},
 	]);
 
@@ -153,19 +155,20 @@ export class HomePage extends SignalWatcher(LitElement) {
 
 					<div class="row" style="gap: 16px" slot="actionItems"></div>
 				</div>
-
-				${this.routes.outlet()}
-				<div
-					class="column"
-					style="gap: 12px; position: fixed; right: 16px; bottom: 16px"
-				>
-					<new-arduino-connected-alert
-						@bpv-device-created=${(e: CustomEvent) =>
-							this.routes.goto(
-								`bpv-devices/${encodeHashToBase64(e.detail.bpvDeviceHash)}`,
-							)}
-					></new-arduino-connected-alert>
-					<collect-measurements-alert></collect-measurements-alert>
+				<div class="column fill" style="margin: 16px">
+					${this.routes.outlet()}
+					<div
+						class="column"
+						style="gap: 12px; position: fixed; right: 16px; bottom: 16px"
+					>
+						<new-arduino-connected-alert
+							@bpv-device-created=${(e: CustomEvent) =>
+								this.routes.goto(
+									`bpv-devices/${encodeHashToBase64(e.detail.bpvDeviceHash)}`,
+								)}
+						></new-arduino-connected-alert>
+						<collect-measurements-alert></collect-measurements-alert>
+					</div>
 				</div>
 			</div>
 		`;

@@ -2,7 +2,10 @@ use serialport::{available_ports, SerialPortInfo};
 
 #[tauri::command]
 pub fn list_connected_arduinos() -> Result<Vec<SerialPortInfo>, String> {
-    let available_ports = available_ports().map_err(|err| format!("{err:?}"))?;
+    internal_list_connected_arduinos().map_err(|err| err.to_string())
+}
+fn internal_list_connected_arduinos() -> anyhow::Result<Vec<SerialPortInfo>> {
+    let available_ports = available_ports()?;
 
     let connected_arduinos: Vec<SerialPortInfo> = available_ports
         .into_iter()

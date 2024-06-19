@@ -1,7 +1,8 @@
 use holochain_types::prelude::AppBundle;
 use lair_keystore::dependencies::sodoken::{BufRead, BufWrite};
-use std::collections::HashMap;
+use serialport::available_ports;
 use std::path::PathBuf;
+use std::{collections::HashMap, time::Duration};
 use tauri::AppHandle;
 use tauri_plugin_holochain::{HolochainExt, HolochainPluginConfig};
 use url2::Url2;
@@ -54,6 +55,37 @@ pub fn run() {
                     )
                     .await?
                     .build()?;
+
+                // Keep sending data to the arduinos so that they know they are still
+                // connected to a computer and they don't go into deepSleep mode
+                tauri::async_runtime::spawn(async move {
+                    loop {
+                        let baud_rate: u32 = 9600;
+
+                        let Ok(ports) = available_ports() else {
+                            continue;
+                        };
+
+                        for port in ports {
+                            let Ok(mut port) = serialport::new(port.port_name, baud_rate).open()
+                            else {
+                                continue;
+                            };
+
+                            let mut write_buffer: Vec<u8> = vec![0; 1];
+                            write_buffer[0] = b'p';
+
+                            let n = 1; // How many bytes to write to serial port.
+
+                            // Write to serial port
+                            let Ok(_) = port.write(&write_buffer[..n]) else {
+                                continue;
+                            }; // blocks
+                        }
+
+                        std::thread::sleep(Duration::from_millis(50));
+                    }
+                });
                 Ok(())
             });
             result?;
