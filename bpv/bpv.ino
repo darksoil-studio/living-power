@@ -69,7 +69,14 @@ void setup() {
 
   // Initialize RTC
   rtc.begin();
-      Serial.println("sss");
+  rtc.setHours(12);
+  rtc.setMinutes(0);
+  rtc.setSeconds(0);
+
+  // Set the date
+  rtc.setDay(18);
+  rtc.setMonth(6);
+  rtc.setYear(24);
 
   // Initialize SD card
   if (!SD.begin()) {
@@ -92,27 +99,48 @@ void setup() {
   // analogReadCorrection(5,)  Analog correction 
 }
 
-void sendMeasurementsIfRequested() {
-  if (Serial.available() > 0) {
-      char rc = Serial.read();
-      if (rc == 'c') {
-        File dataFile = SD.open(fileName, FILE_READ);
+void sendLastMeasurement() {
+  Serial.print("BEGIN_L");
+  File dataFile = SD.open(fileName, FILE_READ);
+  int size = dataFile.size();
+  if (size < 50) {
+    Serial.println("None");
+  } else {
+    dataFile.seek(size - 60);
+    dataFile.readStringUntil('\n'); // Line before the last line
+    Serial.println(dataFile.readStringUntil('\n'));
+  }
 
-        while (dataFile.available()) {
-          char buf[4096];
-          int bytes = dataFile.read(buf, 4096);
-          Serial.write(buf, bytes);
-          //Serial.write(dataFile.read());
-        }
-        Serial.println("");
-        Serial.println("EndOfFile");
-        dataFile.close();
-      }
+  dataFile.close();
+}
+void sendMeasurements() {
+  File dataFile = SD.open(fileName, FILE_READ);
+
+  while (dataFile.available()) {
+    char buf[4096];
+    int bytes = dataFile.read(buf, 4096);
+    Serial.write(buf, bytes);
+  }
+  Serial.println("");
+  Serial.println("EndOfFile");
+  dataFile.close();
+}
+
+void syncWithComputer() {
+  if (Serial.available() > 0) {
+    char rc = Serial.read();
+    if (rc == 'c') {
+      Serial.print("BEGIN_C");
+      sendMeasurements();
+    } else if (rc == 'l') {
+      Serial.print("BEGIN_L");
+      sendLastMeasurement();
+    }
   }
 }
 
 void loop() {
-  sendMeasurementsIfRequested();
+  syncWithComputer();
  
   // Read sensor data
   float temperature = ENV.readTemperature();
@@ -140,7 +168,7 @@ void loop() {
   //LowPower.deepSleep(loggingInterval); 
 
   // Enter sleep mode for 1 minute
-  //delay(10); // Wait for 1 second to ensure any remaining data logging is completed
+  delay(60000); // Wait for 1 second to ensure any remaining data logging is completed
   //LowPower.attachInterruptWakeup(13, callback, CHANGE);
   //LowPower.deepSleep(10000); // Enter sleep mode for 59 seconds
 }

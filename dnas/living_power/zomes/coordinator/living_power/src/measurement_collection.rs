@@ -1,27 +1,39 @@
 use hdk::prelude::*;
 use living_power_integrity::*;
 
+const BITS_PER_MEASUREMENT: usize = 39 + 64 + 32 + 32 + 32 + 32 + 32; // ActionHash + i64 + u32 + u32 + u32 + u32 + u32
+
 #[hdk_extern]
-pub fn create_measurement_collection(
+pub fn create_measurement_collections(
     measurement_collection: MeasurementCollection,
-) -> ExternResult<Record> {
-    let measurement_collection_hash = create_entry(&EntryTypes::MeasurementCollection(
-        measurement_collection.clone(),
-    ))?;
+) -> ExternResult<Vec<ActionHash>> {
+    let mut hashes: Vec<ActionHash> = Vec::new();
 
-    create_link(
-        measurement_collection.bpv_device_hash.clone(),
-        measurement_collection_hash.clone(),
-        LinkTypes::BpvDeviceToMeasurementCollections,
-        (),
-    )?;
+    let chunks = measurement_collection
+        .measurements
+        .chunks(ENTRY_SIZE_LIMIT * 8 / BITS_PER_MEASUREMENT - 10);
+    // .chunks(1000);
 
-    let record = get(measurement_collection_hash.clone(), GetOptions::default())?.ok_or(
-        wasm_error!(WasmErrorInner::Guest(
-            "Could not find the newly created MeasurementCollection".to_string()
-        )),
-    )?;
-    Ok(record)
+    for chunk in chunks {
+        let measurement_collection = MeasurementCollection {
+            bpv_device_hash: measurement_collection.bpv_device_hash.clone(),
+            external_resistor_ohms: measurement_collection.external_resistor_ohms,
+            measurements: chunk.to_vec(),
+        };
+        let measurement_collection_hash = create_entry(&EntryTypes::MeasurementCollection(
+            measurement_collection.clone(),
+        ))?;
+
+        create_link(
+            measurement_collection.bpv_device_hash.clone(),
+            measurement_collection_hash.clone(),
+            LinkTypes::BpvDeviceToMeasurementCollections,
+            (),
+        )?;
+        hashes.push(measurement_collection_hash);
+    }
+
+    Ok(hashes)
 }
 
 #[hdk_extern]

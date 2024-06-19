@@ -36,7 +36,8 @@ pub fn run() {
         ))
         .invoke_handler(tauri::generate_handler![
             arduino::list_connected_arduinos,
-            collect_measurements::collect_measurements
+            collect_measurements::collect_measurements,
+            collect_measurements::get_last_measurement
         ])
         .setup(|app| {
             let handle = app.handle().clone();

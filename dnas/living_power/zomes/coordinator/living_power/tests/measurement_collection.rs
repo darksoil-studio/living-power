@@ -10,7 +10,9 @@ use holochain::{conductor::config::ConductorConfig, sweettest::*};
 use living_power_integrity::*;
 
 mod common;
-use common::{create_measurement_collection, sample_measurement_collection_1, sample_measurement_collection_2};
+use common::{
+    create_measurement_collection, sample_measurement_collection_1, sample_measurement_collection_2,
+};
 
 use common::{create_bpv_device, sample_bpv_device_1, sample_bpv_device_2};
 
@@ -35,7 +37,7 @@ async fn create_measurement_collection_test() {
 
     // Alice creates a MeasurementCollection
     let record: Record =
-        create_measurement_collection(&conductors[0], &alice_zome, sample.clone()).await;
+        create_measurement_collections(&conductors[0], &alice_zome, sample.clone()).await;
     let entry: MeasurementCollection = record.entry().to_app_option().unwrap().unwrap();
     assert!(entry.eq(&sample));
 }
@@ -62,7 +64,7 @@ async fn create_and_read_measurement_collection() {
 
     // Alice creates a MeasurementCollection
     let record: Record =
-        create_measurement_collection(&conductors[0], &alice_zome, sample.clone()).await;
+        create_measurement_collections(&conductors[0], &alice_zome, sample.clone()).await;
 
     await_consistency(Duration::from_secs(60), [&alice, &bobbo])
         .await
@@ -101,7 +103,7 @@ async fn create_and_delete_measurement_collection() {
 
     // Alice creates a MeasurementCollection
     let record: Record =
-        create_measurement_collection(&conductors[0], &alice_zome, sample_1.clone()).await;
+        create_measurement_collections(&conductors[0], &alice_zome, sample_1.clone()).await;
     let original_action_hash = record.signed_action.hashed.hash;
 
     // Alice deletes the MeasurementCollection

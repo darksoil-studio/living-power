@@ -30,7 +30,8 @@ import { SerialPortInfo } from './arduinos/connected-arduinos.js';
 import { rootRouterContext } from './context.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';
 import './living_power/living_power/elements/bpv-device-detail.js';
-import './living_power/living_power/elements/synchronize-data-button.js';
+import './living_power/living_power/elements/collect-measurements-alert.js';
+import './living_power/living_power/elements/new-arduino-connected-alert.js';
 import { LivingPowerStore } from './living_power/living_power/living-power-store.js';
 
 @customElement('home-page')
@@ -144,25 +145,28 @@ export class HomePage extends SignalWatcher(LitElement) {
 		}
 	}
 
-	renderBpvActions() {
-		if (!this.selectedBpvDeviceHash) return html``;
-		return html`<synchronize-data-button
-			.bpvDeviceHash=${this.selectedBpvDeviceHash}
-		></synchronize-data-button>`;
-	}
-
 	render() {
 		return html`
-			<div class="column fill">
+			<div class="column fill" style="position: relative">
 				<div class="row top-bar">
 					<span class="title" style="flex: 1">${msg('Living Power')}</span>
 
-					<div class="row" style="gap: 16px" slot="actionItems">
-						${this.renderBpvActions()}
-					</div>
+					<div class="row" style="gap: 16px" slot="actionItems"></div>
 				</div>
 
 				${this.routes.outlet()}
+				<div
+					class="column"
+					style="gap: 12px; position: fixed; right: 16px; bottom: 16px"
+				>
+					<new-arduino-connected-alert
+						@bpv-device-created=${(e: CustomEvent) =>
+							this.routes.goto(
+								`bpv-devices/${encodeHashToBase64(e.detail.bpvDeviceHash)}`,
+							)}
+					></new-arduino-connected-alert>
+					<collect-measurements-alert></collect-measurements-alert>
+				</div>
 			</div>
 		`;
 	}

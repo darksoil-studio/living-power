@@ -5,6 +5,3 @@ import { createContext } from '@lit/context';
 import { SerialPortInfo } from './arduinos/connected-arduinos';
 
 export const rootRouterContext = createContext<Router>('router');
-
-export const connectedArduinosContext =
-	createContext<AsyncSignal<Array<SerialPortInfo>>>('connectedArduinos');

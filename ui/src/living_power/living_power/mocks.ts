@@ -172,7 +172,7 @@ export class LivingPowerZomeMock extends ZomeMock implements AppClient {
 	>();
 	measurementCollectionsForBpvDevice = new HoloHashMap<ActionHash, Link[]>();
 
-	async create_measurement_collection(
+	async create_measurement_collections(
 		measurementCollection: MeasurementCollection,
 	): Promise<Record> {
 		const entryHash = hash(measurementCollection, HashType.ENTRY);

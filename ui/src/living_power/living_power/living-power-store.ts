@@ -4,6 +4,7 @@ import {
 	collectionSignal,
 	deletedLinksSignal,
 	deletesForEntrySignal,
+	fromPromise,
 	immutableEntrySignal,
 	latestVersionOfEntrySignal,
 	liveLinksSignal,
@@ -13,6 +14,7 @@ import {
 	EntryRecord,
 	HashType,
 	LazyHoloHashMap,
+	LazyMap,
 	retype,
 	slice,
 } from '@holochain-open-dev/utils';
@@ -24,6 +26,7 @@ import {
 	Record,
 } from '@holochain/client';
 
+import { getLastMeasurement } from '../../arduinos/collect-measurements.js';
 import { connectedArduinos } from '../../arduinos/connected-arduinos.js';
 import { LivingPowerClient } from './living-power-client.js';
 import { MeasurementCollection } from './types.js';
@@ -36,52 +39,74 @@ export class LivingPowerStore {
 
 	/** Bpv Device */
 
-	bpvDevices = new LazyHoloHashMap((bpvDeviceHash: ActionHash) => ({
-		latestVersion: latestVersionOfEntrySignal(this.client, () =>
-			this.client.getLatestBpvDevice(bpvDeviceHash),
-		),
-		original: immutableEntrySignal(() =>
+	bpvDevices = new LazyHoloHashMap((bpvDeviceHash: ActionHash) => {
+		const original = immutableEntrySignal(() =>
 			this.client.getOriginalBpvDevice(bpvDeviceHash),
-		),
-		allRevisions: allRevisionsOfEntrySignal(this.client, () =>
-			this.client.getAllRevisionsForBpvDevice(bpvDeviceHash),
-		),
-		deletes: deletesForEntrySignal(this.client, bpvDeviceHash, () =>
-			this.client.getAllDeletesForBpvDevice(bpvDeviceHash),
-		),
-		measurementCollections: {
-			live: pipe(
-				liveLinksSignal(
-					this.client,
-					bpvDeviceHash,
-					() =>
-						this.client.getMeasurementCollectionsForBpvDevice(bpvDeviceHash),
-					'BpvDeviceToMeasurementCollections',
-				),
-				links =>
-					slice(
-						this.measurementCollections,
-						links.map(l => l.target),
-					),
+		);
+		return {
+			latestVersion: latestVersionOfEntrySignal(this.client, () =>
+				this.client.getLatestBpvDevice(bpvDeviceHash),
 			),
-			deleted: pipe(
-				deletedLinksSignal(
-					this.client,
-					bpvDeviceHash,
-					() =>
-						this.client.getDeletedMeasurementCollectionsForBpvDevice(
-							bpvDeviceHash,
+			original,
+			allRevisions: allRevisionsOfEntrySignal(this.client, () =>
+				this.client.getAllRevisionsForBpvDevice(bpvDeviceHash),
+			),
+			deletes: deletesForEntrySignal(this.client, bpvDeviceHash, () =>
+				this.client.getAllDeletesForBpvDevice(bpvDeviceHash),
+			),
+			connectedArduino: pipe(
+				this.connectedArduinos,
+				_ => original,
+				(bpvDevice, arduinos) => {
+					const serialPortInfo = arduinos.find(
+						a =>
+							a.port_type?.UsbPort.serial_number ===
+							bpvDevice.entry.arduino_serial_number,
+					);
+
+					if (!serialPortInfo) return undefined;
+					return {
+						serialPortInfo,
+						lastMeasurement: fromPromise(() =>
+							getLastMeasurement(serialPortInfo.port_name),
 						),
-					'BpvDeviceToMeasurementCollections',
-				),
-				links =>
-					slice(
-						this.measurementCollections,
-						links.map(l => l[0].hashed.content.target_address),
-					),
+					};
+				},
 			),
-		},
-	}));
+			measurementCollections: {
+				live: pipe(
+					liveLinksSignal(
+						this.client,
+						bpvDeviceHash,
+						() =>
+							this.client.getMeasurementCollectionsForBpvDevice(bpvDeviceHash),
+						'BpvDeviceToMeasurementCollections',
+					),
+					links =>
+						slice(
+							this.measurementCollections,
+							links.map(l => l.target),
+						),
+				),
+				deleted: pipe(
+					deletedLinksSignal(
+						this.client,
+						bpvDeviceHash,
+						() =>
+							this.client.getDeletedMeasurementCollectionsForBpvDevice(
+								bpvDeviceHash,
+							),
+						'BpvDeviceToMeasurementCollections',
+					),
+					links =>
+						slice(
+							this.measurementCollections,
+							links.map(l => l[0].hashed.content.target_address),
+						),
+				),
+			},
+		};
+	});
 
 	/** All Bpv Devices */
 

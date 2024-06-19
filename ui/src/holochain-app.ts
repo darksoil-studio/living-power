@@ -28,10 +28,9 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { appStyles } from './app-styles.js';
 import { collectMeasurements } from './arduinos/collect-measurements.js';
 import { connectedArduinos } from './arduinos/connected-arduinos.js';
-import { connectedArduinosContext, rootRouterContext } from './context.js';
+import { rootRouterContext } from './context.js';
 import './home-page.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';
-import './living_power/living_power/elements/new-bpv-device-connected-dialog.js';
 import { LivingPowerClient } from './living_power/living_power/living-power-client.js';
 import { LivingPowerStore } from './living_power/living_power/living-power-store.js';
 
@@ -131,15 +130,7 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 				</div>
 			`;
 
-		return html`
-			<new-bpv-device-connected-dialog
-				@bpv-device-created=${(e: CustomEvent) =>
-					this.router.goto(
-						`home/bpv-devices/${encodeHashToBase64(e.detail.bpvDeviceHash)}`,
-					)}
-			></new-bpv-device-connected-dialog>
-			${this.router.outlet()}
-		`;
+		return html` ${this.router.outlet()} `;
 	}
 
 	static styles = [

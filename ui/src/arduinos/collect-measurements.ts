@@ -9,3 +9,11 @@ export function collectMeasurements(
 		portName,
 	});
 }
+
+export function getLastMeasurement(
+	portName: string,
+): Promise<Measurement | undefined> {
+	return invoke('get_last_measurement', {
+		portName,
+	});
+}

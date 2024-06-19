@@ -77,7 +77,7 @@ pub async fn sample_measurement_collection_2(
     }
 }
 
-pub async fn create_measurement_collection(
+pub async fn create_measurement_collections(
     conductor: &SweetConductor,
     zome: &SweetZome,
     measurement_collection: MeasurementCollection,
@@ -85,7 +85,7 @@ pub async fn create_measurement_collection(
     let record: Record = conductor
         .call(
             zome,
-            "create_measurement_collection",
+            "create_measurement_collections",
             measurement_collection,
         )
         .await;

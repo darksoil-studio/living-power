@@ -107,12 +107,11 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 	/** Measurement Collection */
 	async createMeasurementCollection(
 		measurementCollection: MeasurementCollection,
-	): Promise<EntryRecord<MeasurementCollection>> {
-		const record: Record = await this.callZome(
-			'create_measurement_collection',
+	): Promise<Array<ActionHash>> {
+		return await this.callZome(
+			'create_measurement_collections',
 			measurementCollection,
 		);
-		return new EntryRecord(record);
 	}
 
 	async getMeasurementCollection(

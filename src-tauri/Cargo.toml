@@ -18,22 +18,23 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.0.0-beta.17", default-features = false , features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-beta.22", features = [] }
-tauri-plugin-holochain = { git = "https://github.com/darksoil-studio/p2p-shipyard", branch = "main" }
-holochain_types = { version = "0.3.1" }
-lair_keystore = { version = "0.4.0" }
 serde = "1"
 regex = "1"
 chrono = "0.4"
-
-holochain_client = { version = "0.5.0-rc" }
-
+once_cell = "1"
 log = "0.4"
-tauri-plugin-log = "2.0.0-beta"
 url2 = "0.0.6"
 app_dirs2 = "2.5.5"
 tempdir = "0.3.7"
 anyhow = "1"
+
+tauri = { version = "2.0.0-beta.22", features = [] }
+tauri-plugin-holochain = { git = "https://github.com/darksoil-studio/p2p-shipyard", branch = "develop" }
+tauri-plugin-log = "2.0.0-beta"
+
+holochain_client = { version = "0.5.0-rc" }
+holochain_types = { version = "0.3.1" }
+lair_keystore = { version = "0.4.0" }
 
 mountpoints = "0.2"
 serialport = { version = "4.3", features = ["serde"] }
