@@ -11,7 +11,8 @@ use living_power_integrity::*;
 
 mod common;
 use common::{
-    create_measurement_collection, sample_measurement_collection_1, sample_measurement_collection_2,
+    create_measurement_collections, sample_measurement_collection_1,
+    sample_measurement_collection_2,
 };
 
 use common::{create_bpv_device, sample_bpv_device_1, sample_bpv_device_2};
