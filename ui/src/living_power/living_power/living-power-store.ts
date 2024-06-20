@@ -1,5 +1,8 @@
 import {
 	AsyncComputed,
+	AsyncSignal,
+	AsyncState,
+	Signal,
 	allRevisionsOfEntrySignal,
 	collectionSignal,
 	deletedLinksSignal,
@@ -31,6 +34,54 @@ import { connectedArduinos } from '../../arduinos/connected-arduinos.js';
 import { LivingPowerClient } from './living-power-client.js';
 import { MeasurementCollection } from './types.js';
 import { BpvDevice } from './types.js';
+
+export function lazyLoadAndPoll<T>(
+	task: () => Promise<T>,
+	intervalMs: number,
+): AsyncSignal<T> {
+	let watched = false;
+	const signal = new AsyncState<T>(
+		{ status: 'pending' },
+		{
+			[Signal.subtle.watched]: () => {
+				watched = true;
+
+				const request = () => {
+					if (watched)
+						task()
+							.then(value => {
+								if (watched)
+									signal.set({
+										status: 'completed',
+										value,
+									});
+							})
+							.catch(error => {
+								if (watched) {
+									signal.set({
+										status: 'error',
+										error,
+									});
+								}
+							})
+							.finally(() => {
+								if (watched) {
+									setTimeout(() => request(), intervalMs);
+								}
+							});
+				};
+				request();
+			},
+			[Signal.subtle.unwatched]: () => {
+				watched = false;
+				signal.set({
+					status: 'pending',
+				});
+			},
+		},
+	);
+	return signal;
+}
 
 export class LivingPowerStore {
 	constructor(public client: LivingPowerClient) {}
@@ -67,8 +118,9 @@ export class LivingPowerStore {
 					if (!serialPortInfo) return undefined;
 					return {
 						serialPortInfo,
-						lastMeasurement: fromPromise(() =>
-							getLastMeasurement(serialPortInfo.port_name),
+						lastMeasurement: lazyLoadAndPoll(
+							() => getLastMeasurement(serialPortInfo.port_name),
+							3000,
 						),
 					};
 				},

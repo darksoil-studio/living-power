@@ -10,6 +10,7 @@ import { ActionHash, encodeHashToBase64 } from '@holochain/client';
 import { consume } from '@lit/context';
 import { msg } from '@lit/localize';
 import {
+	mdiAlertOutline,
 	mdiDatabaseArrowUpOutline,
 	mdiInformationOffOutline,
 	mdiInformationOutline,
@@ -139,6 +140,28 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			return html``;
 
 		const lastMeasurement = connectedArduino.value.lastMeasurement.get();
+		if (lastMeasurement.status === 'error')
+			return html`
+				<sl-alert open variant="danger">
+					<sl-icon slot="icon" .src=${wrapPathInSvg(mdiAlertOutline)}></sl-icon>
+					<div class="row" style="flex: 1; gap: 24px;">
+						<div class="column">
+							<span>
+								<strong
+									>${msg(
+										'Error reading the measurements from the device.',
+									)}</strong
+								></span
+							>
+							<span
+								>${msg(
+									'Reconnect the BPV device, press the reset button and try again.',
+								)}</span
+							>
+						</div>
+					</div>
+				</sl-alert>
+			`;
 		if (lastMeasurement.status !== 'completed' || !lastMeasurement.value)
 			return html``;
 		const measurementsByTimestampDescending = measurements.value.sort(
@@ -146,7 +169,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		);
 		if (
 			measurementsByTimestampDescending.length !== 0 &&
-			lastMeasurement.value.timestamp <
+			lastMeasurement.value.timestamp <=
 				measurementsByTimestampDescending[0].timestamp
 		)
 			return html``;

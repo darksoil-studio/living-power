@@ -20,14 +20,10 @@ import { provide } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
-// Replace 'light.css' with 'dark.css' if you want the dark theme
-import '@shoelace-style/shoelace/dist/themes/light.css';
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import { appStyles } from './app-styles.js';
-import { collectMeasurements } from './arduinos/collect-measurements.js';
-import { connectedArduinos } from './arduinos/connected-arduinos.js';
 import { rootRouterContext } from './context.js';
 import './home-page.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';

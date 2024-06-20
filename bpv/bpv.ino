@@ -180,7 +180,6 @@ void loop() {
   // Enter sleep mode
   //LowPower.deepSleep(loggingInterval); 
 
-  Serial.end();
   // Enter sleep mode for 1 minute
     //delay(60000); // Wait for 1 second to ensure any remaining data logging is completed
   //LowPower.attachInterruptWakeup(pin, syncWithComputer, CHANGE); 

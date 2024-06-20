@@ -10,7 +10,7 @@ export function collectMeasurements(
 	});
 }
 
-export function getLastMeasurement(
+export async function getLastMeasurement(
 	portName: string,
 ): Promise<Measurement | undefined> {
 	return invoke('get_last_measurement', {
