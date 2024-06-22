@@ -107,6 +107,7 @@ jobs:
 
       - name: Install and prepare
         run: |
+          npm install -g pnpm
           pnpm install
 
       - name: Download release of the .happ
