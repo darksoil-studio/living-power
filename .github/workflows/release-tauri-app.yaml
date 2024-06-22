@@ -112,16 +112,15 @@ jobs:
           pnpm install
 
       - name: Download release of the .happ
-        id: release_data
-        uses: KevinRohn/github-full-release-data@v2
+        uses: robinraju/release-downloader@v1.10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with: 
           repository: "darksoil-studio/living-power"
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: v${{ needs.publish-happ.outputs.appVersion }}
-          asset-file: '*.happ'
-          asset-output: 'workdir/'
+          releaseId: ${{ needs.publish-happ.outputs.releaseId }}
+          fileName: 'living-power.happ'
+          out-file-path: 'workdir/'
 
       - name: build the app
         uses: tauri-apps/tauri-action@v0
