@@ -57,6 +57,7 @@ jobs:
 
 
   release-tauri-app:
+    needs: publish-happ
     strategy:
       fail-fast: false
       matrix:
