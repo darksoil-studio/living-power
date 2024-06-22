@@ -51,7 +51,7 @@ jobs:
           artifacts: "workdir/living-power.happ"
           body: "See assets below to download and install this version."
           name: Living Power v${{ steps.version.outputs.APP_VERSION }}
-          tag: Living Power-v${{ steps.version.outputs.APP_VERSION }}
+          tag: v${{ steps.version.outputs.APP_VERSION }}
           prerelease: true
           draft: true
 
@@ -119,7 +119,7 @@ jobs:
         with: 
           repository: "darksoil-studio/living-power"
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: Living Power-v${{ needs.publish-happ.outputs.appVersion }}
+          version: v${{ needs.publish-happ.outputs.appVersion }}
           asset-file: '*.happ'
           asset-output: 'workdir/'
 
