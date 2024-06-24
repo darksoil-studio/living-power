@@ -1,10 +1,10 @@
 #include <Arduino_MKRENV.h>
 #include <Wire.h>
 #include <SD.h>
-// #include <WiFiNINA.h>
+#include <WiFiNINA.h>
 #include <RTCZero.h>
 #include <ArduinoLowPower.h>
-//#include <ArduinoECCX08.h>
+#include <ArduinoECCX08.h>
 #include <Arduino_PMIC.h>
 // #include <SAMD_AnalogCorrection.h>
 #include <RunningMedian.h>
@@ -32,69 +32,64 @@ const char* ntpServer = "pool.ntp.org";
 const int timeZone = 0; // Adjust for your time zone
 const int NTP_PACKET_SIZE = 48;
 
-// WiFiUDP udp;
+WiFiUDP udp;
 RTCZero rtc;
 // Declare a variable to store the light level
 float lightLevel;
 
-bool woke = false;
-
 const int sampleSize = 31;
 RunningMedian samples = RunningMedian(sampleSize);
-const int pin = 0;
 
 void setup() {
 
-  Serial.begin(9600);
-  while(!Serial);
-  //pinMode(pin, INPUT_PULLUP);
+  //Serial.begin(9600);
+  //while(!Serial);
 
-  // WiFi.end();
+    // disable battery charging
+  if (!PMIC.begin()) {
+    //Serial.println("Failed to initialize PMIC!");
+    while (1);
+  }
+  if (!PMIC.disableCharge()) {
+      //Serial.println("Error disabling Charge mode");
+    }
+
+  WiFi.end();
 
  // Connect to Wi-Fi and set RTC
-  // connectToWiFi();
-  // setTimeFromNTP();
+  connectToWiFi();
+  setTimeFromNTP();
 
   // Disconnect from Wi-Fi to save power
-  // WiFi.disconnect();
+  WiFi.disconnect();
   Serial.println("Disconnected from Wi-Fi");
 
   // deactivate crypto chip to reduce energy consumption
-  //ECCX08.begin();
-  //ECCX08.end();     // power down ECC508
+  ECCX08.begin();
+  ECCX08.end();     // power down ECC508
 
   // Initialize sensors
   if (!ENV.begin()) {
-    Serial.println("Failed to initialize MKR ENV shield!");
+    //Serial.println("Failed to initialize MKR ENV shield!");
     while (1);
   }
 
   // Initialize RTC
   rtc.begin();
-  rtc.setHours(12);
-  rtc.setMinutes(0);
-  rtc.setSeconds(0);
-
-  // Set the date
-  rtc.setDay(18);
-  rtc.setMonth(6);
-  rtc.setYear(24);
-
+  
   // Initialize SD card
   if (!SD.begin()) {
-    Serial.println("Failed to initialize SD card!");
+    //Serial.println("Failed to initialize SD card!");
     while (1);
   }
 
   // Open file for data logging
   File dataFile = SD.open(fileName, FILE_WRITE);
   if (!dataFile) {
-    Serial.println("Failed to open file for data logging!");
+    //Serial.println("Failed to open file for data logging!");
     while (1);
   }
-  if (dataFile.size() < 10) { // Only print headers if file is empty
-    dataFile.println("Date,Time,Temperature (C),Humidity (%),Light Level (lux),Voltage");
-  }
+  dataFile.println("Date,Time,Temperature (C),Humidity (%),Light Level (lux),Voltage");
   dataFile.close();
 
   // Setting voltage 
@@ -102,6 +97,7 @@ void setup() {
   analogReadResolution(12);
   // analogReadCorrection(5,)  Analog correction 
 }
+
 
 void sendLastMeasurement() {
   Serial.print("BEGIN_L");
@@ -163,27 +159,25 @@ void loop() {
   // Read voltage
   // float voltage = analogRead(A0) * 3.3 / 4095;
 
-//  for (int i = 0; i < sampleSize; i++) {
-//    int a = analogRead(A0);
-//    samples.add(a);
-//  }
-//  float voltage = samples.getMedian() * 3.3 / 4095;
-//  samples.clear();
-  float voltage = random(200,500);
+    for (int i = 0; i < sampleSize; i++) {
+    int a = analogRead(A0);
+    samples.add(a);
+  }
+  float voltage = samples.getMedian() * 3.3 / 4095;
+  samples.clear();
   //Serial.print("Voltage= ");
   //Serial.println(voltage, 3);
 
   // Log data to SD card
-  //Serial.println("Logging data");
   logData(temperature, humidity, lightLevel, voltage);
 
   // Enter sleep mode
-  //LowPower.deepSleep(loggingInterval); 
+  LowPower.deepSleep(loggingInterval); 
 
   // Enter sleep mode for 1 minute
-    //delay(60000); // Wait for 1 second to ensure any remaining data logging is completed
-  //LowPower.attachInterruptWakeup(pin, syncWithComputer, CHANGE); 
-  LowPower.deepSleep(60000); // Enter sleep mode for 59 seconds
+  // delay(1000); // Wait for 1 second to ensure any remaining data logging is completed
+  // LowPower.deepSleep(59000); // Enter sleep mode for 59 seconds
+  
 }
 
 void logData(float temperature, float humidity, float lightLevel, float voltage) {
@@ -210,45 +204,44 @@ void logData(float temperature, float humidity, float lightLevel, float voltage)
     //Serial.println("Error opening file");
   }
 }
-// void connectToWiFi() {
-//   int status = WL_IDLE_STATUS;
-//   while (status != WL_CONNECTED) {
-//     Serial.print("Attempting to connect to SSID: ");
-//     Serial.println(ssid);
-//     status = WiFi.begin(ssid, password);
-//     delay(10000); // Wait 10 seconds before retrying
-//   }
-//   Serial.println("Connected to Wi-Fi");
-// }
+void connectToWiFi() {
+  int status = WL_IDLE_STATUS;
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, password);
+    delay(10000); // Wait 10 seconds before retrying
+  }
+  Serial.println("Connected to Wi-Fi");
+}
 
-// void setTimeFromNTP() {
-//   udp.begin(2390); // Start UDP
-//   sendNTPpacket();
-//   delay(1000);
+void setTimeFromNTP() {
+  udp.begin(2390); // Start UDP
+  sendNTPpacket();
+  delay(1000);
 
-//   if (udp.parsePacket()) {
-//     byte packetBuffer[NTP_PACKET_SIZE];
-//     udp.read(packetBuffer, NTP_PACKET_SIZE);
+  if (udp.parsePacket()) {
+    byte packetBuffer[NTP_PACKET_SIZE];
+    udp.read(packetBuffer, NTP_PACKET_SIZE);
 
-//     unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-//     unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-//     unsigned long secsSince1900 = (highWord << 16) | lowWord;
-//     const unsigned long seventyYears = 2208988800UL;
-//     unsigned long epoch = secsSince1900 - seventyYears;
-//     rtc.setEpoch(epoch + timeZone * 3600);
-//     Serial.println("RTC time set from NTP");
-//   } else {
-//     Serial.println("No NTP response");
-//   }
+    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+    unsigned long secsSince1900 = (highWord << 16) | lowWord;
+    const unsigned long seventyYears = 2208988800UL;
+    unsigned long epoch = secsSince1900 - seventyYears;
+    rtc.setEpoch(epoch + timeZone * 3600);
+    Serial.println("RTC time set from NTP");
+  } else {
+    Serial.println("No NTP response");
+  }
 
-//   udp.stop();
-// }
+  udp.stop();
+}
 
-// void sendNTPpacket() {
-//   byte packetBuffer[NTP_PACKET_SIZE] = { 0 };
-//   packetBuffer[0] = 0b11100011; // LI, Version, Mode
-//   udp.beginPacket(ntpServer, 123); // NTP requests are to port 123
-//   udp.write(packetBuffer, NTP_PACKET_SIZE);
-//   udp.endPacket();
-// }
-
+void sendNTPpacket() {
+  byte packetBuffer[NTP_PACKET_SIZE] = { 0 };
+  packetBuffer[0] = 0b11100011; // LI, Version, Mode
+  udp.beginPacket(ntpServer, 123); // NTP requests are to port 123
+  udp.write(packetBuffer, NTP_PACKET_SIZE);
+  udp.endPacket();
+}
