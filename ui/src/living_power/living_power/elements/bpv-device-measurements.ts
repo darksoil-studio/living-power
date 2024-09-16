@@ -10,10 +10,13 @@ import { ActionHash, EntryHash, Record } from '@holochain/client';
 import { consume } from '@lit/context';
 import { localized, msg } from '@lit/localize';
 import { mdiInformationOutline } from '@mdi/js';
+import { SlRadioGroup } from '@shoelace-style/shoelace';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
+import '@shoelace-style/shoelace/dist/components/radio-button/radio-button.js';
+import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
 import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
@@ -35,114 +38,150 @@ export interface ChartMeasurement extends Measurement {
 	power_micro_watts: number;
 }
 
+const MILLIS_IN_AN_HOUR = 1000 * 60 * 60;
+const MILLIS_IN_A_DAY = MILLIS_IN_AN_HOUR * 24;
+const MILLIS_IN_A_WEEK = MILLIS_IN_A_DAY * 7;
+const MILLIS_IN_A_MONTH = MILLIS_IN_A_DAY * 30;
+
+export function isTimestampInTimeFilter(
+	timestamp: number,
+	timeFilter: TimeFilter,
+): boolean {
+	switch (timeFilter) {
+		case 'last_day':
+			const timestampForOneDayAgo = Date.now() - MILLIS_IN_A_DAY;
+			return timestamp > timestampForOneDayAgo;
+		case 'last_week':
+			const timestampForOneWeekAgo = Date.now() - MILLIS_IN_A_WEEK;
+			return timestamp > timestampForOneWeekAgo;
+		case 'last_month':
+			const timestampForOneMonthAgo = Date.now() - MILLIS_IN_A_MONTH;
+			return timestamp > timestampForOneMonthAgo;
+		case 'all_time':
+			return true;
+	}
+}
+
 export function measurementCollectionToChartMeasurements(
 	measurementCollections: Array<MeasurementCollection>,
+	timeFilter: TimeFilter,
 ): ChartMeasurement[] {
 	return ([] as ChartMeasurement[]).concat(
 		...measurementCollections.map(mc =>
-			mc.measurements.map(m => {
-				const intensity_micro_amperes =
-					m.voltage_millivolts / 1000 / mc.external_resistor_ohms;
-				return {
-					...m,
-					external_resistor_ohms: mc.external_resistor_ohms,
-					intensity_micro_amperes,
-					power_micro_watts:
-						(intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000,
-				};
-			}),
+			mc.measurements
+				.filter(m => isTimestampInTimeFilter(m.timestamp, timeFilter))
+				.map(m => {
+					const intensity_micro_amperes =
+						m.voltage_millivolts / 1000 / mc.external_resistor_ohms;
+					return {
+						...m,
+						external_resistor_ohms: mc.external_resistor_ohms,
+						intensity_micro_amperes,
+						power_micro_watts:
+							(intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000,
+					};
+				}),
 		),
 	);
 }
 
-export function chartConfig(
+export function chartData(
 	measurementCollections: Array<MeasurementCollection>,
-): ChartConfiguration<'line'> {
+	timeFilter: TimeFilter,
+): ChartData<'line'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
+		timeFilter,
 	);
 	return {
+		datasets: [
+			{
+				label: msg('Voltage (mV)'),
+				data: allMeasurements.map(m => ({
+					x: m.timestamp / 1000,
+					y: m.voltage_millivolts / 1000,
+				})),
+				parsing: false,
+				yAxisID: 'voltage',
+				cubicInterpolationMode: 'monotone',
+				tension: 0.4,
+			},
+			// {
+			// 	label: msg('Humidity (%)'),
+			// 	data: allMeasurements.map(m => ({
+			// 		x: m.timestamp / 1000,
+			// 		y: m.humidity_percentage / 1000,
+			// 	})),
+			// 	parsing: false,
+			// 	yAxisID: 'humidity',
+			// 	cubicInterpolationMode: 'monotone',
+			// 	tension: 0.4,
+			// },
+			{
+				label: msg('Light Level (Lux)'),
+				data: allMeasurements.map(m => ({
+					x: m.timestamp / 1000,
+					y: m.light_level_lux / 1000,
+				})),
+				parsing: false,
+				yAxisID: 'lightlevel',
+				cubicInterpolationMode: 'monotone',
+				tension: 0.4,
+			},
+			{
+				label: msg('Temperature (ºC)'),
+				data: allMeasurements.map(m => ({
+					x: m.timestamp / 1000,
+					y: m.temperature_celsius / 1000,
+				})),
+				parsing: false,
+				yAxisID: 'temperature',
+				cubicInterpolationMode: 'monotone',
+				tension: 0.4,
+			},
+			{
+				label: msg('External Resistor (kOhms)'),
+				data: allMeasurements.map(m => ({
+					x: m.timestamp / 1000,
+					y: m.external_resistor_ohms / 1000,
+				})),
+				parsing: false,
+				yAxisID: 'resistor',
+				stepped: true,
+			},
+			{
+				label: msg('Power (uW)'),
+				data: allMeasurements.map(m => ({
+					x: m.timestamp / 1000,
+					y: m.power_micro_watts,
+				})),
+				parsing: false,
+				yAxisID: 'power',
+				cubicInterpolationMode: 'monotone',
+				tension: 0.4,
+			},
+			{
+				label: msg('Intensity (uA)'),
+				data: allMeasurements.map(m => ({
+					x: m.timestamp / 1000,
+					y: m.intensity_micro_amperes,
+				})),
+				parsing: false,
+				yAxisID: 'intensity',
+				cubicInterpolationMode: 'monotone',
+				tension: 0.4,
+			},
+		],
+	};
+}
+
+export function chartConfig(
+	measurementCollections: Array<MeasurementCollection>,
+	timeFilter: TimeFilter,
+): ChartConfiguration<'line'> {
+	return {
 		type: 'line',
-		data: {
-			datasets: [
-				{
-					label: msg('Voltage (mV)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.voltage_millivolts / 1000,
-					})),
-					parsing: false,
-					yAxisID: 'voltage',
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
-				// {
-				// 	label: msg('Humidity (%)'),
-				// 	data: allMeasurements.map(m => ({
-				// 		x: m.timestamp / 1000,
-				// 		y: m.humidity_percentage / 1000,
-				// 	})),
-				// 	parsing: false,
-				// 	yAxisID: 'humidity',
-				// 	cubicInterpolationMode: 'monotone',
-				// 	tension: 0.4,
-				// },
-				{
-					label: msg('Light Level (Lux)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.light_level_lux / 1000,
-					})),
-					parsing: false,
-					yAxisID: 'lightlevel',
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
-				{
-					label: msg('Temperature (ºC)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.temperature_celsius / 1000,
-					})),
-					parsing: false,
-					yAxisID: 'temperature',
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
-				{
-					label: msg('External Resistor (kOhms)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.external_resistor_ohms / 1000,
-					})),
-					parsing: false,
-					yAxisID: 'resistor',
-					stepped: true,
-				},
-				{
-					label: msg('Power (uW)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.power_micro_watts,
-					})),
-					parsing: false,
-					yAxisID: 'power',
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
-				{
-					label: msg('Intensity (uA)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.intensity_micro_amperes,
-					})),
-					parsing: false,
-					yAxisID: 'intensity',
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
-			],
-		},
+		data: chartData(measurementCollections, timeFilter),
 		options: {
 			scales: {
 				x: {
@@ -203,9 +242,11 @@ export function chartConfig(
 
 export function intensityVoltageChartConfig(
 	measurementCollections: Array<MeasurementCollection>,
+	timeFilter: TimeFilter,
 ): ChartConfiguration<'scatter'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
+		timeFilter,
 	);
 	return {
 		type: 'scatter',
@@ -250,6 +291,8 @@ export function intensityVoltageChartConfig(
 	};
 }
 
+type TimeFilter = 'last_day' | 'last_week' | 'last_month' | 'all_time';
+
 /**
  * @element bpv-device-measurements
  */
@@ -268,6 +311,11 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 	@consume({ context: livingPowerStoreContext, subscribe: true })
 	livingPowerStore!: LivingPowerStore;
 
+	@state()
+	timeFilter: TimeFilter = 'last_week';
+
+	chart: Chart | undefined;
+
 	renderTimeChart(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
 	) {
@@ -276,11 +324,23 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 				<canvas
 					${ref(el => {
 						if (!el) return;
-						const chart = new Chart(
-							(el as HTMLCanvasElement).getContext('2d')!,
-							chartConfig(measurementsCollections.map(r => r.entry)),
-						);
-						setTimeout(() => chart.resize(), 1);
+						if (!this.chart) {
+							this.chart = new Chart(
+								(el as HTMLCanvasElement).getContext('2d')!,
+								chartConfig(
+									measurementsCollections.map(r => r.entry),
+									this.timeFilter,
+								),
+							);
+							setTimeout(() => this.chart!.resize(), 1);
+						} else {
+							const data = chartData(
+								measurementsCollections.map(r => r.entry),
+								this.timeFilter,
+							);
+							this.chart.data = data;
+							this.chart.update();
+						}
 					})}
 				></canvas>
 			</div>
@@ -299,6 +359,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 							(el as HTMLCanvasElement).getContext('2d')!,
 							intensityVoltageChartConfig(
 								measurementsCollections.map(r => r.entry),
+								this.timeFilter,
 							),
 						);
 						setTimeout(() => chart.resize(), 1);
@@ -344,7 +405,6 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 								<sl-tab-group
 									style="flex: 1"
 									@sl-tab-show=${(e: CustomEvent) => {
-										console.log(e);
 										this.selectedTab = e.detail.name;
 									}}
 								>
@@ -361,6 +421,33 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 													measurementsCollections,
 												)}</sl-tab-panel
 									>
+									<span slot="nav" style="flex: 1"> </span>
+									<div
+										slot="nav"
+										class="row"
+										style="align-items: center; margin-right: 4px"
+									>
+										<sl-radio-group
+											value="last_week"
+											@sl-change=${(e: CustomEvent) => {
+												this.timeFilter = (e.target as SlRadioGroup)
+													.value as TimeFilter;
+											}}
+										>
+											<sl-radio-button value="last_day"
+												>${msg('Last day')}</sl-radio-button
+											>
+											<sl-radio-button value="last_week"
+												>${msg('Last week')}
+											</sl-radio-button>
+											<sl-radio-button value="last_month"
+												>${msg('Last month')}
+											</sl-radio-button>
+											<sl-radio-button value="all_time"
+												>${msg('All time')}
+											</sl-radio-button>
+										</sl-radio-group>
+									</div>
 								</sl-tab-group>
 							`}
 				</div>

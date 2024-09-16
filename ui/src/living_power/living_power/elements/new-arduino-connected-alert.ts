@@ -119,7 +119,6 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 		serialnumber: string,
 		connectionType: 'sdcard' | 'usbserial',
 	) {
-		console.log(serialnumber);
 		const input = this.shadowRoot!.getElementById(
 			`bpv-device-name-${serialnumber}`,
 		) as SlInput;
