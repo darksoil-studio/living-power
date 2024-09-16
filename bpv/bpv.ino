@@ -1,14 +1,14 @@
 #include <Arduino_MKRENV.h>
 #include <Wire.h>
 #include <SD.h>
-#include <WiFiNINA.h>
+//#include <WiFiNINA.h>
 #include <RTCZero.h>
 #include <ArduinoLowPower.h>
 #include <ArduinoECCX08.h>
 #include <Arduino_PMIC.h>
 // #include <SAMD_AnalogCorrection.h>
 #include <RunningMedian.h>
-
+#include <ArduinoUniqueID.h>
 
 // Define chip select pin
 const int chipSelect = 4;
@@ -17,8 +17,11 @@ const int chipSelect = 4;
 // 60000 = 1 minute N.B. 1 second needed to log a measurement
 // const unsigned long loggingInterval = 1799000; // log every 30 minutes allowing 1 second for recording a measurement
 // const unsigned long loggingInterval = 599000; // log every 10 minutes allowing 1 second for recording a measurement
-const unsigned long loggingInterval = 3599000; // log every 1 hour allowing 1 second for recording a measurement
-// const unsigned long loggingInterval = 59000; // log every 1 minute
+//const unsigned long loggingInterval = 3599000; // log every 1 hour allowing 1 second for recording a measurement
+ const unsigned long loggingInterval = 59000; // log every 1 minute
+
+// Define file name for storing the serial number
+const char* serialNumberFileName = "serial";
 
 // Define file name for data logging
 const char* fileName = "data.csv";
@@ -32,7 +35,7 @@ const char* ntpServer = "pool.ntp.org";
 const int timeZone = 0; // Adjust for your time zone
 const int NTP_PACKET_SIZE = 48;
 
-WiFiUDP udp;
+
 RTCZero rtc;
 // Declare a variable to store the light level
 float lightLevel;
@@ -42,26 +45,26 @@ RunningMedian samples = RunningMedian(sampleSize);
 
 void setup() {
 
-  //Serial.begin(9600);
-  //while(!Serial);
+  Serial.begin(9600);
+  while(!Serial);
 
     // disable battery charging
-  if (!PMIC.begin()) {
+//  if (!PMIC.begin()) {
     //Serial.println("Failed to initialize PMIC!");
-    while (1);
-  }
-  if (!PMIC.disableCharge()) {
+//    while (1);
+//  }
+//  if (!PMIC.disableCharge()) {
       //Serial.println("Error disabling Charge mode");
-    }
+//    }
 
-  WiFi.end();
+  //WiFi.end();
 
  // Connect to Wi-Fi and set RTC
-  connectToWiFi();
-  setTimeFromNTP();
+  //connectToWiFi();
+  //setTimeFromNTP();
 
   // Disconnect from Wi-Fi to save power
-  WiFi.disconnect();
+  //WiFi.disconnect();
   Serial.println("Disconnected from Wi-Fi");
 
   // deactivate crypto chip to reduce energy consumption
@@ -70,7 +73,7 @@ void setup() {
 
   // Initialize sensors
   if (!ENV.begin()) {
-    //Serial.println("Failed to initialize MKR ENV shield!");
+    Serial.println("Failed to initialize MKR ENV shield!");
     while (1);
   }
 
@@ -79,18 +82,36 @@ void setup() {
   
   // Initialize SD card
   if (!SD.begin()) {
-    //Serial.println("Failed to initialize SD card!");
+    Serial.println("Failed to initialize SD card!");
     while (1);
   }
 
   // Open file for data logging
   File dataFile = SD.open(fileName, FILE_WRITE);
   if (!dataFile) {
-    //Serial.println("Failed to open file for data logging!");
+    Serial.println("Failed to open file for data logging!");
     while (1);
   }
-  dataFile.println("Date,Time,Temperature (C),Humidity (%),Light Level (lux),Voltage");
+  if (dataFile.size() == 0) {
+    dataFile.println("Date,Time,Temperature (C),Humidity (%),Light Level (lux),Voltage");
+  }
   dataFile.close();
+
+  // Removing the file before creating and writing to it prevents appending the serial number many times to the file
+  SD.remove(serialNumberFileName);
+  File serialNumberDataFile = SD.open(serialNumberFileName, FILE_WRITE);
+  if (!serialNumberDataFile) {
+    Serial.println("Failed to open file for serialnumber!");
+    while (1);
+  }
+  for (size_t i = 0; i < UniqueIDsize; i++)	{
+ 	  if (UniqueID[i] < 0x10)
+ 		  serialNumberDataFile.print("0");
+  	serialNumberDataFile.print(UniqueID[i], HEX);
+  }
+  serialNumberDataFile.close();
+
+  Serial.println("Finished setup");
 
   // Setting voltage 
   analogReference(AR_DEFAULT); 
@@ -159,12 +180,13 @@ void loop() {
   // Read voltage
   // float voltage = analogRead(A0) * 3.3 / 4095;
 
-    for (int i = 0; i < sampleSize; i++) {
-    int a = analogRead(A0);
-    samples.add(a);
-  }
-  float voltage = samples.getMedian() * 3.3 / 4095;
-  samples.clear();
+  //for (int i = 0; i < sampleSize; i++) {
+  //  int a = analogRead(A0);
+  //  samples.add(a);
+  //}
+  //float voltage = samples.getMedian() * 3.3 / 4095;
+  //samples.clear();
+  float voltage = 333.9;
   //Serial.print("Voltage= ");
   //Serial.println(voltage, 3);
 
@@ -176,7 +198,7 @@ void loop() {
 
   // Enter sleep mode for 1 minute
   // delay(1000); // Wait for 1 second to ensure any remaining data logging is completed
-  // LowPower.deepSleep(59000); // Enter sleep mode for 59 seconds
+  //LowPower.deepSleep(59000); // Enter sleep mode for 59 seconds
   
 }
 
@@ -201,47 +223,6 @@ void logData(float temperature, float humidity, float lightLevel, float voltage)
     dataFile.println(voltageStr);
     dataFile.close();
   } else {
-    //Serial.println("Error opening file");
+    // Serial.println("Error opening file");
   }
-}
-void connectToWiFi() {
-  int status = WL_IDLE_STATUS;
-  while (status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    status = WiFi.begin(ssid, password);
-    delay(10000); // Wait 10 seconds before retrying
-  }
-  Serial.println("Connected to Wi-Fi");
-}
-
-void setTimeFromNTP() {
-  udp.begin(2390); // Start UDP
-  sendNTPpacket();
-  delay(1000);
-
-  if (udp.parsePacket()) {
-    byte packetBuffer[NTP_PACKET_SIZE];
-    udp.read(packetBuffer, NTP_PACKET_SIZE);
-
-    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-    unsigned long secsSince1900 = (highWord << 16) | lowWord;
-    const unsigned long seventyYears = 2208988800UL;
-    unsigned long epoch = secsSince1900 - seventyYears;
-    rtc.setEpoch(epoch + timeZone * 3600);
-    Serial.println("RTC time set from NTP");
-  } else {
-    Serial.println("No NTP response");
-  }
-
-  udp.stop();
-}
-
-void sendNTPpacket() {
-  byte packetBuffer[NTP_PACKET_SIZE] = { 0 };
-  packetBuffer[0] = 0b11100011; // LI, Version, Mode
-  udp.beginPacket(ntpServer, 123); // NTP requests are to port 123
-  udp.write(packetBuffer, NTP_PACKET_SIZE);
-  udp.endPacket();
 }

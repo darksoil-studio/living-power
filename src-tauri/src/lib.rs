@@ -4,11 +4,11 @@ use serialport::available_ports;
 use std::path::PathBuf;
 use std::{collections::HashMap, time::Duration};
 use tauri::AppHandle;
-use tauri_plugin_holochain::{HolochainExt, HolochainPluginConfig};
-use url2::Url2;
+use tauri_plugin_holochain::{HolochainExt, HolochainPluginConfig, WANNetworkConfig};
 
 mod arduino;
 mod collect_measurements;
+mod sdcards;
 
 const APP_ID: &'static str = "living-power";
 const PRODUCTION_SIGNAL_URL: &'static str = "wss://signal.holo.host";
@@ -27,20 +27,23 @@ pub fn run() {
                 .level(log::LevelFilter::Warn)
                 .build(),
         )
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_holochain::init(
             vec_to_locked(vec![]).expect("Can't build passphrase"),
-            HolochainPluginConfig {
-                signal_url: signal_url(),
-                bootstrap_url: bootstrap_url(),
-                holochain_dir: holochain_dir(),
-            },
+            HolochainPluginConfig::new(holochain_dir(), wan_network_config()),
         ))
         .invoke_handler(tauri::generate_handler![
             arduino::list_connected_arduinos,
             collect_measurements::collect_measurements,
-            collect_measurements::get_last_measurement
+            collect_measurements::get_last_measurement,
+            sdcards::list_measurements_sdcards,
+            sdcards::collect_measurements_from_sdcard
         ])
         .setup(|app| {
+            #[cfg(not(mobile))]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+
             let handle = app.handle().clone();
             let result: anyhow::Result<()> = tauri::async_runtime::block_on(async move {
                 setup(handle).await?;
@@ -115,7 +118,13 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
     if installed_apps.len() == 0 {
         handle
             .holochain()?
-            .install_app(String::from(APP_ID), happ_bundle(), HashMap::new(), None)
+            .install_app(
+                String::from(APP_ID),
+                happ_bundle(),
+                HashMap::new(),
+                None,
+                None,
+            )
             .await?;
 
         Ok(())
@@ -129,33 +138,16 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
     }
 }
 
-fn internal_ip() -> String {
-    std::option_env!("INTERNAL_IP")
-        .expect("Environment variable INTERNAL_IP was not set")
-        .to_string()
-}
-
-fn bootstrap_url() -> Url2 {
+fn wan_network_config() -> Option<WANNetworkConfig> {
     // Resolved at compile time to be able to point to local services
     if tauri::is_dev() {
-        let internal_ip = internal_ip();
-        let port = std::option_env!("BOOTSTRAP_PORT")
-            .expect("Environment variable BOOTSTRAP_PORT was not set");
-        url2::url2!("http://{internal_ip}:{port}")
+        None
     } else {
-        url2::url2!("{}", PRODUCTION_BOOTSTRAP_URL)
-    }
-}
-
-fn signal_url() -> Url2 {
-    // Resolved at compile time to be able to point to local services
-    if tauri::is_dev() {
-        let internal_ip = internal_ip();
-        let signal_port =
-            std::option_env!("SIGNAL_PORT").expect("Environment variable INTERNAL_IP was not set");
-        url2::url2!("ws://{internal_ip}:{signal_port}")
-    } else {
-        url2::url2!("{}", PRODUCTION_SIGNAL_URL)
+        // Some(WANNetworkConfig {
+        //     signal_url: url2::url2!("wss://signal.holo.host"),
+        //     bootstrap_url: url2::url2!("https://bootstrap.holo.host")
+        // })
+        None
     }
 }
 

@@ -76,17 +76,17 @@ export function chartConfig(
 					cubicInterpolationMode: 'monotone',
 					tension: 0.4,
 				},
-				{
-					label: msg('Humidity (%)'),
-					data: allMeasurements.map(m => ({
-						x: m.timestamp / 1000,
-						y: m.humidity_percentage / 1000,
-					})),
-					parsing: false,
-					yAxisID: 'humidity',
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
+				// {
+				// 	label: msg('Humidity (%)'),
+				// 	data: allMeasurements.map(m => ({
+				// 		x: m.timestamp / 1000,
+				// 		y: m.humidity_percentage / 1000,
+				// 	})),
+				// 	parsing: false,
+				// 	yAxisID: 'humidity',
+				// 	cubicInterpolationMode: 'monotone',
+				// 	tension: 0.4,
+				// },
 				{
 					label: msg('Light Level (Lux)'),
 					data: allMeasurements.map(m => ({
@@ -335,7 +335,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										class="placeholder"
 										style="max-width: 40rem; text-align: center"
 										>${msg(
-											'To collect measurements from this BPV device, connect it to this computer through a USB device, and PRESS THE RESET BUTTON ON THE ARDUINO DEVICE.',
+											'To collect measurements from this BPV device, connect it to this computer through a USB cable, and PRESS THE RESET BUTTON ON THE ARDUINO DEVICE.',
 										)}</span
 									>
 								</div>

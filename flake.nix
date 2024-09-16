@@ -2,35 +2,33 @@
   description = "Template for Holochain app development";
 
   inputs = {
+    holonix.url = "github:holochain/holonix/main-0.3";
+
     profiles.url = "github:holochain-open-dev/profiles/nixify";
-    p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard";
-    versions.url = "github:holochain/holochain?dir=versions/0_3";
+    p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard/develop";
 
-    holochain.url = "github:holochain/holochain";
-    holochain.inputs.versions.follows = "versions";
+    nixpkgs.follows = "hc-infra/nixpkgs";
+    flake-parts.follows = "holonix/flake-parts";
 
-    nixpkgs.follows = "holochain/nixpkgs";
-    flake-parts.follows = "holochain/flake-parts";
-
-    hc-infra = { url = "github:holochain-open-dev/infrastructure"; };
-    scaffolding = { url = "github:holochain-open-dev/templates"; };
-
+    hc-infra.url = "github:holochain-open-dev/infrastructure";
+    scaffolding.url = "github:holochain-open-dev/templates";
   };
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [ ./happ.nix ];
 
-      systems = builtins.attrNames inputs.holochain.devShells;
+      systems = builtins.attrNames inputs.holonix.devShells;
       perSystem = { inputs', config, pkgs, system, ... }: {
         devShells.default = pkgs.mkShell {
           inputsFrom = [
             inputs'.p2p-shipyard.devShells.holochainTauriDev
             inputs'.hc-infra.devShells.synchronized-pnpm
+            inputs'.holonix.devShells.default
           ];
           packages = [
-            pkgs.arduino-ide
             inputs'.scaffolding.packages.hc-scaffold-app-template
+            pkgs.arduino-ide
             pkgs.udev
           ];
         };
@@ -38,7 +36,7 @@
           inputsFrom = [
             inputs'.p2p-shipyard.devShells.holochainTauriAndroidDev
             inputs'.hc-infra.devShells.synchronized-pnpm
-            inputs'.holochain.devShells.holonix
+            inputs'.holonix.devShells.default
           ];
           packages =
             [ inputs'.scaffolding.packages.hc-scaffold-app-template pkgs.udev ];

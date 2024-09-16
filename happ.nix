@@ -5,9 +5,9 @@
   imports = (map (m: "${./.}/dnas/${m}/dna.nix") (builtins.attrNames
     (if builtins.pathExists ./dnas then builtins.readDir ./dnas else { })));
 
-  perSystem = { inputs', lib, self', ... }: {
+  perSystem = { inputs', system, lib, self', ... }: {
     packages.living_power_happ = inputs.hc-infra.outputs.lib.happ {
-      holochain = inputs'.holochain;
+      inherit system;
       happManifest = ./workdir/happ.yaml;
       dnas = {
         # Include here the DNA packages for this hApp, e.g.:

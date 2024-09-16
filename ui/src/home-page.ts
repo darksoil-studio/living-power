@@ -1,10 +1,10 @@
 import { Router, Routes, wrapPathInSvg } from '@holochain-open-dev/elements';
-import {
-	ProfilesStore,
-	profilesStoreContext,
-} from '@holochain-open-dev/profiles';
-import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
-import '@holochain-open-dev/profiles/dist/elements/profile-list-item-skeleton.js';
+// import {
+// 	ProfilesStore,
+// 	profilesStoreContext,
+// } from '@holochain-open-dev/profiles';
+// import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
+// import '@holochain-open-dev/profiles/dist/elements/profile-list-item-skeleton.js';
 import {
 	AsyncResult,
 	SignalWatcher,
@@ -44,12 +44,12 @@ export class HomePage extends SignalWatcher(LitElement) {
 	@consume({ context: rootRouterContext, subscribe: true })
 	rootRouter!: Router;
 
-	/**
-	 * @internal
-	 */
-	@consume({ context: profilesStoreContext, subscribe: true })
-	@property()
-	_profilesStore!: ProfilesStore;
+	// /**
+	//  * @internal
+	//  */
+	// @consume({ context: profilesStoreContext, subscribe: true })
+	// @property()
+	// _profilesStore!: ProfilesStore;
 
 	/**
 	 * @internal
@@ -114,39 +114,49 @@ export class HomePage extends SignalWatcher(LitElement) {
 			<span class="placeholder">${msg('No BPV devices were found.')}</span>
 			<span class="placeholder" style="max-width: 40rem; text-align: center"
 				>${msg(
-					'To add a BPV device, connect it to this computer through a USB device, and PRESS THE RESET BUTTON ON THE ARDUINO DEVICE.',
+					'To add a BPV device, connect it to this computer through a USB cable, and',
+				)}<strong
+					>${msg(' press the reset button on the arduino device')}</strong
+				></span
+			>
+			<span class="placeholder" style="max-width: 40rem; text-align: center"
+				>${msg('OR')}</span
+			>
+			<span class="placeholder" style="max-width: 40rem; text-align: center"
+				>${msg(
+					'extract the SD card from the BPV device and insert it in this computer.',
 				)}</span
 			>
 		</div>`;
 	}
 
-	renderMyProfile() {
-		const myProfile = this._profilesStore.myProfile.get();
+	// renderMyProfile() {
+	// 	const myProfile = this._profilesStore.myProfile.get();
 
-		switch (myProfile.status) {
-			case 'pending':
-				return html`<profile-list-item-skeleton></profile-list-item-skeleton>`;
-			case 'error':
-				return html`<display-error
-					.headline=${msg('Error fetching the profile')}
-					.error=${myProfile.error}
-					tooltip
-				></display-error>`;
-			case 'completed':
-				return html`<div
-					class="row"
-					style="align-items: center;"
-					slot="actionItems"
-				>
-					<agent-avatar
-						.agentPubKey=${this._profilesStore.client.client.myPubKey}
-					></agent-avatar>
-					<span style="margin: 0 16px;"
-						>${myProfile.value?.entry.nickname}</span
-					>
-				</div>`;
-		}
-	}
+	// 	switch (myProfile.status) {
+	// 		case 'pending':
+	// 			return html`<profile-list-item-skeleton></profile-list-item-skeleton>`;
+	// 		case 'error':
+	// 			return html`<display-error
+	// 				.headline=${msg('Error fetching the profile')}
+	// 				.error=${myProfile.error}
+	// 				tooltip
+	// 			></display-error>`;
+	// 		case 'completed':
+	// 			return html`<div
+	// 				class="row"
+	// 				style="align-items: center;"
+	// 				slot="actionItems"
+	// 			>
+	// 				<agent-avatar
+	// 					.agentPubKey=${this._profilesStore.client.client.myPubKey}
+	// 				></agent-avatar>
+	// 				<span style="margin: 0 16px;"
+	// 					>${myProfile.value?.entry.nickname}</span
+	// 				>
+	// 			</div>`;
+	// 	}
+	// }
 
 	allBpvDevicesLatest() {
 		const devices = this._livingPowerStore.allBpvDevices.get();

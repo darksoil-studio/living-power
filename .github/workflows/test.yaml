@@ -27,5 +27,7 @@ jobs:
           name: holochain-open-dev
 
       - name: Install and test
+        env:
+          CACHIX_AUTH_TOKEN: "${{ secrets.DARKSOIL_CACHIX_AUTH_TOKEN }}"
         run: |
-          nix develop --command bash -c "pnpm i && pnpm t && pnpm package"
+          cachix watch-exec darksoil-studio -- nix develop --command bash -c "pnpm i && pnpm t && pnpm package"

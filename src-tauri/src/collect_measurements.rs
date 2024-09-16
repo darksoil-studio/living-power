@@ -20,7 +20,7 @@ fn internal_get_last_measurement(port_name: String) -> anyhow::Result<Option<Mea
     let baud_rate: u32 = 9600;
 
     let mut port = serialport::new(port_name, baud_rate)
-        .timeout(Duration::from_millis(50000))
+        .timeout(Duration::from_millis(5000))
         .open()?;
 
     let mut write_buffer: Vec<u8> = vec![0; 1];
@@ -107,7 +107,12 @@ fn internal_collect_measurements(port_name: String) -> anyhow::Result<Vec<Measur
         }
         result.push_str(&buf[..n]);
     }
-    let split = result.split('\n');
+
+    parse_csv_file_contents(result)
+}
+
+pub fn parse_csv_file_contents(contents: String) -> anyhow::Result<Vec<Measurement>> {
+    let split = contents.split('\n');
 
     let mut measurements: Vec<Measurement> = vec![];
     for line in split {
@@ -119,11 +124,6 @@ fn internal_collect_measurements(port_name: String) -> anyhow::Result<Vec<Measur
             };
         }
     }
-
-    let m = measurements
-        .iter()
-        .max_by(|m1, m2| m1.timestamp.cmp(&m2.timestamp));
-    println!("Biggest measurement {m:?}");
 
     Ok(measurements)
 }

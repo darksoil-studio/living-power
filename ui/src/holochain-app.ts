@@ -1,13 +1,13 @@
 import { Router } from '@holochain-open-dev/elements';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import {
-	Profile,
-	ProfilesClient,
-	ProfilesStore,
-	profilesStoreContext,
-} from '@holochain-open-dev/profiles';
-import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
-import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
+// import {
+// 	Profile,
+// 	ProfilesClient,
+// 	ProfilesStore,
+// 	profilesStoreContext,
+// } from '@holochain-open-dev/profiles';
+// import '@holochain-open-dev/profiles/dist/elements/my-profile.js';
+// import '@holochain-open-dev/profiles/dist/elements/profile-prompt.js';
 import { SignalWatcher, joinAsync } from '@holochain-open-dev/signals';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import {
@@ -24,6 +24,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import { appStyles } from './app-styles.js';
+import './automatic-update-dialog.js';
 import { rootRouterContext } from './context.js';
 import './home-page.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';
@@ -41,9 +42,9 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 	@state() _view = { view: 'main' };
 	@state() _error: unknown | undefined;
 
-	@provide({ context: profilesStoreContext })
-	@property()
-	_profilesStore!: ProfilesStore;
+	// @provide({ context: profilesStoreContext })
+	// @property()
+	// _profilesStore!: ProfilesStore;
 
 	_client!: AppClient;
 
@@ -80,9 +81,9 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 
 	// Don't change this
 	async initStores(appClient: AppClient) {
-		this._profilesStore = new ProfilesStore(
-			new ProfilesClient(appClient, 'living_power'),
-		);
+		// this._profilesStore = new ProfilesStore(
+		// 	new ProfilesClient(appClient, 'living_power'),
+		// );
 		this._livingPowerStore = new LivingPowerStore(
 			new LivingPowerClient(appClient, 'living_power'),
 		);
@@ -104,7 +105,7 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 		`;
 	}
 
-	render() {
+	renderContent() {
 		if (this._loading)
 			return html`<div
 				class="row"
@@ -127,6 +128,13 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 			`;
 
 		return html` ${this.router.outlet()} `;
+	}
+
+	render() {
+		return html`
+			${this.renderContent()}
+			<automatic-update-dialog> </automatic-update-dialog>
+		`;
 	}
 
 	static styles = [

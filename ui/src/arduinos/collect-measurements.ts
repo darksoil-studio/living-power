@@ -17,3 +17,11 @@ export async function getLastMeasurement(
 		portName,
 	});
 }
+
+export function collectMeasurementsFromSdcard(
+	sdcardPath: string,
+): Promise<Array<Measurement>> {
+	return invoke('collect_measurements_from_sdcard', {
+		mountpoint: sdcardPath,
+	});
+}

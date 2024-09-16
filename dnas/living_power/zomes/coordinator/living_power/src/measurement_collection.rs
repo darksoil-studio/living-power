@@ -12,7 +12,6 @@ pub fn create_measurement_collections(
     let chunks = measurement_collection
         .measurements
         .chunks(ENTRY_SIZE_LIMIT * 8 / BITS_PER_MEASUREMENT - 10);
-    // .chunks(1000);
 
     for chunk in chunks {
         let measurement_collection = MeasurementCollection {

@@ -3,8 +3,8 @@
 {
   perSystem = { inputs', self', system, pkgs, lib, ... }: rec {
     packages.living_power_coordinator = inputs.hc-infra.outputs.lib.rustZome {
+      inherit system;
       workspacePath = inputs.self.outPath;
-      holochain = inputs'.holochain;
       crateCargoToml = ./Cargo.toml;
       cargoArtifacts =
         inputs.hc-infra.outputs.lib.zomeCargoArtifacts { inherit system; };
@@ -12,8 +12,8 @@
 
     # Test only this zome and its integrity in isolation
     checks.living_power_coordinator = inputs.hc-infra.outputs.lib.sweettest {
+      inherit system;
       workspacePath = inputs.self.outPath;
-      holochain = inputs'.holochain;
       dna = (inputs.hc-infra.outputs.lib.dna {
         dnaManifest = builtins.toFile "dna.yaml" ''
           ---

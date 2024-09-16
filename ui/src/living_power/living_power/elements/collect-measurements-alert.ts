@@ -25,7 +25,10 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
 import { appStyles } from '../../../app-styles.js';
-import { collectMeasurements } from '../../../arduinos/collect-measurements.js';
+import {
+	collectMeasurements,
+	collectMeasurementsFromSdcard,
+} from '../../../arduinos/collect-measurements.js';
 import { SerialPortInfo } from '../../../arduinos/connected-arduinos.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
@@ -61,6 +64,19 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 					`save-measurement-dialog-${encodeHashToBase64(bpvDeviceHash)}`,
 				) as SlDialog
 			).show();
+		} catch (e) {
+			console.error(e);
+			notifyError(msg('Error synchronizing the data.'));
+		}
+		this.collecting = false;
+	}
+
+	async collectMeasurementsFromSdcard(
+		bpvDeviceHash: ActionHash,
+		sdcardPath: string,
+	) {
+		this.collecting = true;
+		try {
 		} catch (e) {
 			console.error(e);
 			notifyError(msg('Error synchronizing the data.'));
@@ -130,15 +146,15 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		};
 	}
 
-	renderAlertForDevice(bpvDeviceHash: ActionHash) {
-		const measurements = this.allMeasurementsForDevice(bpvDeviceHash);
+	renderConnectedArduinoAlert(
+		measurements: Measurement[],
+		bpvDeviceHash: ActionHash,
+	) {
 		const connectedArduino = this._livingPowerStore.bpvDevices
 			.get(bpvDeviceHash)
 			.connectedArduino.get();
-		if (measurements.status !== 'completed') return html``;
 		if (connectedArduino.status !== 'completed' || !connectedArduino.value)
 			return html``;
-
 		const lastMeasurement = connectedArduino.value.lastMeasurement.get();
 		if (lastMeasurement.status === 'error')
 			return html`
@@ -149,9 +165,9 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 							<span>
 								<strong
 									>${msg(
-										'Error reading the measurements from the device.',
+										'Error reading the measurements from the device:',
 									)}</strong
-								></span
+								>&nbsp;${lastMeasurement.error}</span
 							>
 							<span
 								>${msg(
@@ -164,7 +180,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			`;
 		if (lastMeasurement.status !== 'completed' || !lastMeasurement.value)
 			return html``;
-		const measurementsByTimestampDescending = measurements.value.sort(
+		const measurementsByTimestampDescending = measurements.sort(
 			(m1, m2) => m2.timestamp - m1.timestamp,
 		);
 		if (
@@ -175,6 +191,139 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			return html``;
 
 		return html`
+			<sl-alert open>
+				<sl-icon
+					slot="icon"
+					.src=${wrapPathInSvg(mdiInformationOutline)}
+				></sl-icon>
+				<div class="row" style="flex: 1; gap: 24px;">
+					<div class="column">
+						<span> <strong>${msg('New measurements found.')}</strong></span>
+						<span
+							>${msg(
+								'There are new measurements stored in the connected BPV device.',
+							)}</span
+						>
+					</div>
+					<sl-button
+						variant="primary"
+						.loading=${this.collecting}
+						@click=${() =>
+							this.collectMeasurements(
+								bpvDeviceHash,
+								connectedArduino.value!.serialPortInfo,
+							)}
+					>
+						<sl-icon
+							slot="prefix"
+							.src=${wrapPathInSvg(mdiDatabaseArrowUpOutline)}
+						></sl-icon>
+						${msg('Collect Measurements')}</sl-button
+					>
+				</div>
+			</sl-alert>
+		`;
+	}
+
+	renderSdcardAlert(measurements: Measurement[], bpvDeviceHash: ActionHash) {
+		const sdcard = this._livingPowerStore.bpvDevices
+			.get(bpvDeviceHash)
+			.measurementSdcard.get();
+		if (sdcard.status === 'error')
+			return html`
+				<sl-alert open variant="danger">
+					<sl-icon slot="icon" .src=${wrapPathInSvg(mdiAlertOutline)}></sl-icon>
+					<div class="row" style="flex: 1; gap: 24px;">
+						<div class="column">
+							<span> <strong>${msg('Error reading the sdcard.')}</strong></span>
+							<span>${msg('Reconnect the sdcard and try again.')}</span>
+						</div>
+					</div>
+				</sl-alert>
+			`;
+		if (sdcard.status === 'pending' || !sdcard.value) return html``;
+
+		const sdcardMeasurements = sdcard.value.measurements.get();
+		if (sdcardMeasurements.status === 'pending') return html``;
+		if (sdcardMeasurements.status === 'error')
+			return html`
+				<sl-alert open variant="danger">
+					<sl-icon slot="icon" .src=${wrapPathInSvg(mdiAlertOutline)}></sl-icon>
+					<div class="row" style="flex: 1; gap: 24px;">
+						<div class="column">
+							<span>
+								<strong
+									>${msg(
+										'Error reading the measurements from the sdcard.',
+									)}</strong
+								></span
+							>
+							<span>${msg('Reconnect the sdcard and try again.')}</span>
+						</div>
+					</div>
+				</sl-alert>
+			`;
+
+		const measurementsByTimestampDescending = measurements.sort(
+			(m1, m2) => m2.timestamp - m1.timestamp,
+		);
+		const newMeasurementsByTimestampDescending = sdcardMeasurements.value.sort(
+			(m1, m2) => m2.timestamp - m1.timestamp,
+		);
+
+		if (
+			newMeasurementsByTimestampDescending.length === 0 ||
+			(measurementsByTimestampDescending.length !== 0 &&
+				newMeasurementsByTimestampDescending[0].timestamp <=
+					measurementsByTimestampDescending[0].timestamp)
+		)
+			return html``;
+
+		return html`
+			<sl-alert open>
+				<sl-icon
+					slot="icon"
+					.src=${wrapPathInSvg(mdiInformationOutline)}
+				></sl-icon>
+				<div class="row" style="flex: 1; gap: 24px;">
+					<div class="column">
+						<span> <strong>${msg('New measurements found.')}</strong></span>
+						<span
+							>${msg(
+								'There are new measurements stored in the connected SD card.',
+							)}</span
+						>
+					</div>
+					<sl-button
+						variant="primary"
+						.loading=${this.collecting}
+						@click=${async () => {
+							this.measurements = sdcardMeasurements.value;
+							(
+								this.shadowRoot?.getElementById(
+									`save-measurement-dialog-${encodeHashToBase64(bpvDeviceHash)}`,
+								) as SlDialog
+							).show();
+						}}
+					>
+						<sl-icon
+							slot="prefix"
+							.src=${wrapPathInSvg(mdiDatabaseArrowUpOutline)}
+						></sl-icon>
+						${msg('Collect Measurements')}</sl-button
+					>
+				</div>
+			</sl-alert>
+		`;
+	}
+
+	renderAlertForDevice(bpvDeviceHash: ActionHash) {
+		const measurements = this.allMeasurementsForDevice(bpvDeviceHash);
+		if (measurements.status !== 'completed') return html``;
+
+		return html`
+			${this.renderConnectedArduinoAlert(measurements.value, bpvDeviceHash)}
+			${this.renderSdcardAlert(measurements.value, bpvDeviceHash)}
 			<sl-dialog
 				.label=${msg('New Measurements Collected')}
 				id="save-measurement-dialog-${encodeHashToBase64(bpvDeviceHash)}"
@@ -214,39 +363,9 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 					>${msg('Save Measurements')}</sl-button
 				>
 			</sl-dialog>
-			<sl-alert open>
-				<sl-icon
-					slot="icon"
-					.src=${wrapPathInSvg(mdiInformationOutline)}
-				></sl-icon>
-				<div class="row" style="flex: 1; gap: 24px;">
-					<div class="column">
-						<span> <strong>${msg('New measurements found.')}</strong></span>
-						<span
-							>${msg(
-								'There are new measurements stored in the connected BPV device.',
-							)}</span
-						>
-					</div>
-					<sl-button
-						variant="primary"
-						.loading=${this.collecting}
-						@click=${() =>
-							this.collectMeasurements(
-								bpvDeviceHash,
-								connectedArduino.value!.serialPortInfo,
-							)}
-					>
-						<sl-icon
-							slot="prefix"
-							.src=${wrapPathInSvg(mdiDatabaseArrowUpOutline)}
-						></sl-icon>
-						${msg('Collect Measurements')}</sl-button
-					>
-				</div>
-			</sl-alert>
 		`;
 	}
+
 	render() {
 		const allDevices = this._livingPowerStore.allBpvDevices.get();
 		if (allDevices.status !== 'completed') return html``;

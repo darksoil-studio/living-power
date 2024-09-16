@@ -6,10 +6,11 @@
     (builtins.attrNames (builtins.readDir ./zomes/coordinator)))
     ++ (map (m: "${./.}/zomes/integrity/${m}/zome.nix")
       (builtins.attrNames (builtins.readDir ./zomes/integrity)));
-  perSystem = { inputs', self', lib, ... }: {
+
+  perSystem = { inputs', self', lib, system, ... }: {
     packages.living_power_dna = inputs.hc-infra.outputs.lib.dna {
+      inherit system;
       dnaManifest = ./workdir/dna.yaml;
-      holochain = inputs'.holochain;
       zomes = {
         profiles_integrity = inputs'.profiles.packages.profiles_integrity;
         profiles = inputs'.profiles.packages.profiles;

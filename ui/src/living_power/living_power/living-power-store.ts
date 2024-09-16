@@ -29,8 +29,12 @@ import {
 	Record,
 } from '@holochain/client';
 
-import { getLastMeasurement } from '../../arduinos/collect-measurements.js';
+import {
+	collectMeasurementsFromSdcard,
+	getLastMeasurement,
+} from '../../arduinos/collect-measurements.js';
 import { connectedArduinos } from '../../arduinos/connected-arduinos.js';
+import { measurementsSdcards } from '../../arduinos/measurements-sdcards.js';
 import { LivingPowerClient } from './living-power-client.js';
 import { MeasurementCollection } from './types.js';
 import { BpvDevice } from './types.js';
@@ -87,6 +91,7 @@ export class LivingPowerStore {
 	constructor(public client: LivingPowerClient) {}
 
 	connectedArduinos = connectedArduinos();
+	measurementsSdcards = measurementsSdcards();
 
 	/** Bpv Device */
 
@@ -121,6 +126,20 @@ export class LivingPowerStore {
 						lastMeasurement: lazyLoadAndPoll(
 							() => getLastMeasurement(serialPortInfo.port_name),
 							3000,
+						),
+					};
+				},
+			),
+			measurementSdcard: pipe(
+				this.measurementsSdcards,
+				_ => original,
+				(bpvDevice, sdcards) => {
+					const sdcardPath = sdcards[bpvDevice.entry.arduino_serial_number];
+					if (!sdcardPath) return undefined;
+					return {
+						sdcardPath,
+						measurements: fromPromise(() =>
+							collectMeasurementsFromSdcard(sdcardPath),
 						),
 					};
 				},
