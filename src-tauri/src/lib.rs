@@ -169,7 +169,7 @@ fn holochain_dir() -> PathBuf {
             },
         )
         .expect("Could not get app root")
-        .join("holochain")
+        .join(std::env!("CARGO_PKG_VERSION"))
     }
 }
 
