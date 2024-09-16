@@ -39,5 +39,5 @@ fn internal_collect_measurements_from_sdcard(
     mountpoint: PathBuf,
 ) -> anyhow::Result<Vec<Measurement>> {
     let contents = std::fs::read_to_string(mountpoint.join("data.csv"))?;
-    parse_csv_file_contents(contents)
+    parse_csv_file_contents(contents.trim().to_string())
 }

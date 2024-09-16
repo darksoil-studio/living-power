@@ -1,17 +1,15 @@
 import { ActionCommittedSignal } from '@holochain-open-dev/utils';
-import { ActionHash } from '@holochain/client';
 
 export type LivingPowerSignal = ActionCommittedSignal<EntryTypes, LinkTypes>;
 
-export type EntryTypes =
-	| ({ type: 'MeasurementCollection' } & MeasurementCollection)
-	| ({ type: 'BpvDevice' } & BpvDevice);
+export type EntryTypes = {
+	type: 'MeasurementCollection';
+} & MeasurementCollection;
 
 export type LinkTypes = string;
 
-export interface BpvDevice {
+export interface BpvDeviceInfo {
 	name: string;
-	arduino_serial_number: string;
 }
 
 export interface Measurement {
@@ -23,7 +21,7 @@ export interface Measurement {
 }
 
 export interface MeasurementCollection {
-	bpv_device_hash: ActionHash;
+	arduino_serial_number: string;
 	measurements: Array<Measurement>;
 	external_resistor_ohms: number;
 }

@@ -12,23 +12,15 @@ pub struct Measurement {
 #[hdk_entry_helper]
 #[derive(Clone, PartialEq)]
 pub struct MeasurementCollection {
-    pub bpv_device_hash: ActionHash,
+    pub arduino_serial_number: String,
     pub measurements: Vec<Measurement>,
     pub external_resistor_ohms: u32,
 }
 
 pub fn validate_create_measurement_collection(
     _action: EntryCreationAction,
-    measurement_collection: MeasurementCollection,
+    _measurement_collection: MeasurementCollection,
 ) -> ExternResult<ValidateCallbackResult> {
-    let record = must_get_valid_record(measurement_collection.bpv_device_hash.clone())?;
-    let _bpv_device: crate::BpvDevice = record
-        .entry()
-        .to_app_option()
-        .map_err(|e| wasm_error!(e))?
-        .ok_or(wasm_error!(WasmErrorInner::Guest(String::from(
-            "Dependant action must be accompanied by an entry"
-        ))))?;
     Ok(ValidateCallbackResult::Valid)
 }
 pub fn validate_update_measurement_collection(
@@ -54,20 +46,6 @@ pub fn validate_create_link_bpv_device_to_measurement_collections(
     target_address: AnyLinkableHash,
     _tag: LinkTag,
 ) -> ExternResult<ValidateCallbackResult> {
-    // Check the entry type for the given action hash
-    let action_hash = base_address
-        .into_action_hash()
-        .ok_or(wasm_error!(WasmErrorInner::Guest(
-            "No action hash associated with link".to_string()
-        )))?;
-    let record = must_get_valid_record(action_hash)?;
-    let _bpv_device: crate::BpvDevice = record
-        .entry()
-        .to_app_option()
-        .map_err(|e| wasm_error!(e))?
-        .ok_or(wasm_error!(WasmErrorInner::Guest(
-            "Linked action must reference an entry".to_string()
-        )))?;
     // Check the entry type for the given action hash
     let action_hash =
         target_address

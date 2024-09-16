@@ -53,7 +53,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 	_livingPowerStore!: LivingPowerStore;
 
 	async collectMeasurements(
-		bpvDeviceHash: ActionHash,
+		arduinoSerialNumber: string,
 		serialPortInfo: SerialPortInfo,
 	) {
 		this.collecting = true;
@@ -61,7 +61,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			this.measurements = await collectMeasurements(serialPortInfo.port_name);
 			(
 				this.shadowRoot?.getElementById(
-					`save-measurement-dialog-${encodeHashToBase64(bpvDeviceHash)}`,
+					`save-measurement-dialog-${arduinoSerialNumber}`,
 				) as SlDialog
 			).show();
 		} catch (e) {
@@ -71,25 +71,12 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		this.collecting = false;
 	}
 
-	async collectMeasurementsFromSdcard(
-		bpvDeviceHash: ActionHash,
-		sdcardPath: string,
-	) {
-		this.collecting = true;
-		try {
-		} catch (e) {
-			console.error(e);
-			notifyError(msg('Error synchronizing the data.'));
-		}
-		this.collecting = false;
-	}
-
 	async createMeasurementCollection(
-		bpvDeviceHash: ActionHash,
+		arduinoSerialNumber: string,
 		external_resistor_ohms: number,
 	) {
 		const measurementCollection: MeasurementCollection = {
-			bpv_device_hash: bpvDeviceHash,
+			arduino_serial_number: arduinoSerialNumber,
 			measurements: this.measurements!,
 			external_resistor_ohms,
 		};
@@ -119,10 +106,10 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 	}
 
 	allMeasurementsForDevice(
-		bpvDeviceHash: ActionHash,
+		arduinoSerialNumber: string,
 	): AsyncResult<Measurement[]> {
 		const measurementsCollectionsLive = this._livingPowerStore.bpvDevices
-			.get(bpvDeviceHash)
+			.get(arduinoSerialNumber)
 			.measurementCollections.live.get();
 		if (measurementsCollectionsLive.status !== 'completed')
 			return measurementsCollectionsLive;
@@ -148,10 +135,10 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 
 	renderConnectedArduinoAlert(
 		measurements: Measurement[],
-		bpvDeviceHash: ActionHash,
+		arduinoSerialNumber: string,
 	) {
 		const connectedArduino = this._livingPowerStore.bpvDevices
-			.get(bpvDeviceHash)
+			.get(arduinoSerialNumber)
 			.connectedArduino.get();
 		if (connectedArduino.status !== 'completed' || !connectedArduino.value)
 			return html``;
@@ -210,7 +197,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 						.loading=${this.collecting}
 						@click=${() =>
 							this.collectMeasurements(
-								bpvDeviceHash,
+								arduinoSerialNumber,
 								connectedArduino.value!.serialPortInfo,
 							)}
 					>
@@ -225,9 +212,9 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		`;
 	}
 
-	renderSdcardAlert(measurements: Measurement[], bpvDeviceHash: ActionHash) {
+	renderSdcardAlert(measurements: Measurement[], arduinoSerialNumber: string) {
 		const sdcard = this._livingPowerStore.bpvDevices
-			.get(bpvDeviceHash)
+			.get(arduinoSerialNumber)
 			.measurementSdcard.get();
 		if (sdcard.status === 'error')
 			return html`
@@ -301,7 +288,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 							this.measurements = sdcardMeasurements.value;
 							(
 								this.shadowRoot?.getElementById(
-									`save-measurement-dialog-${encodeHashToBase64(bpvDeviceHash)}`,
+									`save-measurement-dialog-${arduinoSerialNumber}`,
 								) as SlDialog
 							).show();
 						}}
@@ -317,16 +304,19 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		`;
 	}
 
-	renderAlertForDevice(bpvDeviceHash: ActionHash) {
-		const measurements = this.allMeasurementsForDevice(bpvDeviceHash);
+	renderAlertForDevice(arduinoSerialNumber: string) {
+		const measurements = this.allMeasurementsForDevice(arduinoSerialNumber);
 		if (measurements.status !== 'completed') return html``;
 
 		return html`
-			${this.renderConnectedArduinoAlert(measurements.value, bpvDeviceHash)}
-			${this.renderSdcardAlert(measurements.value, bpvDeviceHash)}
+			${this.renderConnectedArduinoAlert(
+				measurements.value,
+				arduinoSerialNumber,
+			)}
+			${this.renderSdcardAlert(measurements.value, arduinoSerialNumber)}
 			<sl-dialog
 				.label=${msg('New Measurements Collected')}
-				id="save-measurement-dialog-${encodeHashToBase64(bpvDeviceHash)}"
+				id="save-measurement-dialog-${arduinoSerialNumber}"
 			>
 				<div class="column" style="gap: 12px">
 					<span
@@ -337,7 +327,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 					<sl-input
 						type="number"
 						.label=${msg('External Resistor (Ohms)')}
-						id="external-resistor-ohms"
+						id="external-resistor-ohms-${arduinoSerialNumber}"
 						@input=${() => this.requestUpdate()}
 					></sl-input>
 				</div>
@@ -345,17 +335,20 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 				<sl-button
 					slot="footer"
 					.disabled=${this.committing ||
-					(this.shadowRoot?.getElementById('external-resistor-ohms') as SlInput)
-						?.value === ''}
+					(
+						this.shadowRoot?.getElementById(
+							`external-resistor-ohms-${arduinoSerialNumber}`,
+						) as SlInput
+					)?.value === ''}
 					.loading=${this.committing}
 					variant="primary"
 					@click=${() =>
 						this.createMeasurementCollection(
-							bpvDeviceHash,
+							arduinoSerialNumber,
 							parseInt(
 								(
 									this.shadowRoot?.getElementById(
-										'external-resistor-ohms',
+										`external-resistor-ohms-${arduinoSerialNumber}`,
 									) as SlInput
 								).value,
 							),

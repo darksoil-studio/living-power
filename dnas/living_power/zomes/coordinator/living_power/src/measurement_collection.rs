@@ -1,6 +1,8 @@
 use hdk::prelude::*;
 use living_power_integrity::*;
 
+use crate::bpv_device::bpv_device_hash;
+
 const BITS_PER_MEASUREMENT: usize = 39 + 64 + 32 + 32 + 32 + 32 + 32; // ActionHash + i64 + u32 + u32 + u32 + u32 + u32
 
 #[hdk_extern]
@@ -15,7 +17,7 @@ pub fn create_measurement_collections(
 
     for chunk in chunks {
         let measurement_collection = MeasurementCollection {
-            bpv_device_hash: measurement_collection.bpv_device_hash.clone(),
+            arduino_serial_number: measurement_collection.arduino_serial_number.clone(),
             external_resistor_ohms: measurement_collection.external_resistor_ohms,
             measurements: chunk.to_vec(),
         };
@@ -24,7 +26,7 @@ pub fn create_measurement_collections(
         ))?;
 
         create_link(
-            measurement_collection.bpv_device_hash.clone(),
+            bpv_device_hash(measurement_collection.arduino_serial_number.clone())?,
             measurement_collection_hash.clone(),
             LinkTypes::BpvDeviceToMeasurementCollections,
             (),
@@ -77,7 +79,7 @@ pub fn delete_measurement_collection(
 
     let links = get_links(
         GetLinksInputBuilder::try_new(
-            measurement_collection.bpv_device_hash.clone(),
+            bpv_device_hash(measurement_collection.arduino_serial_number.clone())?,
             LinkTypes::BpvDeviceToMeasurementCollections,
         )?
         .build(),
@@ -132,11 +134,11 @@ pub fn get_oldest_delete_for_measurement_collection(
 
 #[hdk_extern]
 pub fn get_measurement_collections_for_bpv_device(
-    bpv_device_hash: ActionHash,
+    arduino_serial_number: String,
 ) -> ExternResult<Vec<Link>> {
     get_links(
         GetLinksInputBuilder::try_new(
-            bpv_device_hash,
+            bpv_device_hash(arduino_serial_number)?,
             LinkTypes::BpvDeviceToMeasurementCollections,
         )?
         .build(),
@@ -145,10 +147,10 @@ pub fn get_measurement_collections_for_bpv_device(
 
 #[hdk_extern]
 pub fn get_deleted_measurement_collections_for_bpv_device(
-    bpv_device_hash: ActionHash,
+    arduino_serial_number: String,
 ) -> ExternResult<Vec<(SignedActionHashed, Vec<SignedActionHashed>)>> {
     let details = get_link_details(
-        bpv_device_hash,
+        bpv_device_hash(arduino_serial_number)?,
         LinkTypes::BpvDeviceToMeasurementCollections,
         None,
         GetOptions::default(),

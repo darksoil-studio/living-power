@@ -42,24 +42,16 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 		const allBpvDevices = this._livingPowerStore.allBpvDevices.get();
 		if (allBpvDevices.status !== 'completed') return allBpvDevices;
 
-		const allDevices = joinAsync(
-			Array.from(allBpvDevices.value.values()).map(device =>
-				device.original.get(),
-			),
-		);
-		if (allDevices.status !== 'completed') return allDevices;
-
 		const newDevices = connectedArduinos.value.filter(
 			arduino =>
 				arduino.port_type?.UsbPort.serial_number &&
-				!allDevices.value.find(
-					d =>
-						d.entry.arduino_serial_number ===
-						arduino.port_type?.UsbPort.serial_number,
+				!Array.from(allBpvDevices.value.keys()).find(
+					arduinoSerialNumber =>
+						arduinoSerialNumber === arduino.port_type?.UsbPort.serial_number,
 				),
 		);
 		return {
-			status: 'completed' as 'completed',
+			status: 'completed' as const,
 			value: newDevices,
 		};
 	}
@@ -71,18 +63,11 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 		const allBpvDevices = this._livingPowerStore.allBpvDevices.get();
 		if (allBpvDevices.status !== 'completed') return allBpvDevices;
 
-		const allDevices = joinAsync(
-			Array.from(allBpvDevices.value.values()).map(device =>
-				device.original.get(),
-			),
-		);
-		if (allDevices.status !== 'completed') return allDevices;
-
 		const newSdcards = pickBy(
 			sdcards.value,
 			(_, serialnumber) =>
-				!allDevices.value.find(
-					d => d.entry.arduino_serial_number === serialnumber,
+				!Array.from(allBpvDevices.value.keys()).find(
+					arduinoSerialNumber => arduinoSerialNumber === serialnumber,
 				),
 		);
 		return {
@@ -91,23 +76,30 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 		};
 	}
 
-	async createBpvDevice(serialNumber: string, name: string) {
+	async setBpvDeviceInfo(arduinoSerialNumber: string, name: string) {
 		this.creating = true;
 		try {
-			const record = await this._livingPowerStore.client.createBpvDevice({
-				arduino_serial_number: serialNumber,
-				name,
-			});
+			await this._livingPowerStore.client.setBpvDeviceInfo(
+				arduinoSerialNumber,
+				{
+					name,
+				},
+			);
 
 			this.dispatchEvent(
-				new CustomEvent('bpv-device-created', {
+				new CustomEvent('bpv-device-added', {
 					composed: true,
 					bubbles: true,
 					detail: {
-						bpvDeviceHash: record.actionHash,
+						arduinoSerialNumber,
 					},
 				}),
 			);
+			(
+				this.shadowRoot?.getElementById(
+					`create-bpv-device-dialog-${arduinoSerialNumber}`,
+				) as SlDialog
+			).hide();
 		} catch (e: unknown) {
 			console.error(e);
 			notifyError(msg('Error creating the bpv device'));
@@ -124,7 +116,7 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 		) as SlInput;
 		return html`
 			<sl-dialog
-				.label=${msg('Create new BPV device')}
+				.label=${msg('Add BPV device')}
 				id="create-bpv-device-dialog-${serialnumber}"
 			>
 				<sl-input
@@ -138,7 +130,7 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 					.disabled=${!input || input.value === ''}
 					.loading=${this.creating}
 					@click=${() =>
-						this.createBpvDevice(
+						this.setBpvDeviceInfo(
 							serialnumber,
 							(
 								this.shadowRoot!.getElementById(
@@ -180,7 +172,7 @@ export class NewArduinoConnectedAlert extends SignalWatcher(LitElement) {
 							).show()}
 					>
 						<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiPlus)}></sl-icon>
-						${msg('Create BPV device')}</sl-button
+						${msg('Add BPV device')}</sl-button
 					>
 				</div>
 			</sl-alert>

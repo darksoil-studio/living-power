@@ -16,8 +16,7 @@ import {
 	SignedActionHashed,
 } from '@holochain/client';
 
-import { MeasurementCollection } from './types.js';
-import { BpvDevice } from './types.js';
+import { BpvDeviceInfo, MeasurementCollection } from './types.js';
 import { LivingPowerSignal } from './types.js';
 
 export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
@@ -30,72 +29,22 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 	}
 	/** Bpv Device */
 
-	async createBpvDevice(bpvDevice: BpvDevice): Promise<EntryRecord<BpvDevice>> {
-		const record: Record = await this.callZome('create_bpv_device', bpvDevice);
-		return new EntryRecord(record);
-	}
-
-	async getLatestBpvDevice(
-		bpvDeviceHash: ActionHash,
-	): Promise<EntryRecord<BpvDevice> | undefined> {
-		const record: Record = await this.callZome(
-			'get_latest_bpv_device',
-			bpvDeviceHash,
-		);
-		return record ? new EntryRecord(record) : undefined;
-	}
-
-	async getOriginalBpvDevice(
-		bpvDeviceHash: ActionHash,
-	): Promise<EntryRecord<BpvDevice> | undefined> {
-		const record: Record = await this.callZome(
-			'get_original_bpv_device',
-			bpvDeviceHash,
-		);
-		return record ? new EntryRecord(record) : undefined;
-	}
-
-	async getAllRevisionsForBpvDevice(
-		bpvDeviceHash: ActionHash,
-	): Promise<Array<EntryRecord<BpvDevice>>> {
-		const records: Record[] = await this.callZome(
-			'get_all_revisions_for_bpv_device',
-			bpvDeviceHash,
-		);
-		return records.map(r => new EntryRecord(r));
-	}
-
-	async updateBpvDevice(
-		previousBpvDeviceHash: ActionHash,
-		updatedBpvDevice: BpvDevice,
-	): Promise<EntryRecord<BpvDevice>> {
-		const record: Record = await this.callZome('update_bpv_device', {
-			previous_bpv_device_hash: previousBpvDeviceHash,
-			updated_bpv_device: updatedBpvDevice,
+	async setBpvDeviceInfo(
+		arduinoSerialNumber: string,
+		info: BpvDeviceInfo,
+	): Promise<void> {
+		await this.callZome('set_bpv_device_info', {
+			arduino_serial_number: arduinoSerialNumber,
+			info,
 		});
-		return new EntryRecord(record);
 	}
 
-	deleteBpvDevice(originalBpvDeviceHash: ActionHash): Promise<ActionHash> {
-		return this.callZome('delete_bpv_device', originalBpvDeviceHash);
+	async getBpvDeviceInfo(arduinoSerialNumber: string): Promise<Array<Link>> {
+		return this.callZome('get_bpv_device_info', arduinoSerialNumber);
 	}
 
-	getAllDeletesForBpvDevice(
-		originalBpvDeviceHash: ActionHash,
-	): Promise<Array<SignedActionHashed<Delete>>> {
-		return this.callZome(
-			'get_all_deletes_for_bpv_device',
-			originalBpvDeviceHash,
-		);
-	}
-
-	getOldestDeleteForBpvDevice(
-		originalBpvDeviceHash: ActionHash,
-	): Promise<SignedActionHashed<Delete> | undefined> {
-		return this.callZome(
-			'get_oldest_delete_for_bpv_device',
-			originalBpvDeviceHash,
-		);
+	async bpvDeviceHash(arduinoSerialNumber: string): Promise<EntryHash> {
+		return this.callZome('bpv_device_hash', arduinoSerialNumber);
 	}
 
 	/** All Bpv Devices */
@@ -152,22 +101,22 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 	}
 
 	async getMeasurementCollectionsForBpvDevice(
-		bpvDeviceHash: ActionHash,
+		arduinoSerialNumber: string,
 	): Promise<Array<Link>> {
 		return this.callZome(
 			'get_measurement_collections_for_bpv_device',
-			bpvDeviceHash,
+			arduinoSerialNumber,
 		);
 	}
 
 	async getDeletedMeasurementCollectionsForBpvDevice(
-		bpvDeviceHash: ActionHash,
+		arduinoSerialNumber: string,
 	): Promise<
 		Array<[SignedActionHashed<CreateLink>, SignedActionHashed<DeleteLink>[]]>
 	> {
 		return this.callZome(
 			'get_deleted_measurement_collections_for_bpv_device',
-			bpvDeviceHash,
+			arduinoSerialNumber,
 		);
 	}
 }

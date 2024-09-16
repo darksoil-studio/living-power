@@ -30,7 +30,7 @@ import { ref } from 'lit/directives/ref.js';
 import { appStyles } from '../../../app-styles.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
-import { BpvDevice, Measurement, MeasurementCollection } from '../types.js';
+import { Measurement, MeasurementCollection } from '../types.js';
 
 export interface ChartMeasurement extends Measurement {
 	external_resistor_ohms: number;
@@ -240,30 +240,37 @@ export function chartConfig(
 	};
 }
 
-export function intensityVoltageChartConfig(
+export function intensityVoltageChartData(
 	measurementCollections: Array<MeasurementCollection>,
 	timeFilter: TimeFilter,
-): ChartConfiguration<'scatter'> {
+): ChartData<'scatter'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
 		timeFilter,
 	);
 	return {
+		datasets: [
+			{
+				label: undefined,
+				data: allMeasurements.map(m => ({
+					x: m.intensity_micro_amperes,
+					y: m.voltage_millivolts / 1000,
+				})),
+				parsing: false,
+				cubicInterpolationMode: 'monotone',
+				tension: 0.4,
+			},
+		],
+	};
+}
+
+export function intensityVoltageChartConfig(
+	measurementCollections: Array<MeasurementCollection>,
+	timeFilter: TimeFilter,
+): ChartConfiguration<'scatter'> {
+	return {
 		type: 'scatter',
-		data: {
-			datasets: [
-				{
-					label: undefined,
-					data: allMeasurements.map(m => ({
-						x: m.intensity_micro_amperes,
-						y: m.voltage_millivolts / 1000,
-					})),
-					parsing: false,
-					cubicInterpolationMode: 'monotone',
-					tension: 0.4,
-				},
-			],
-		},
+		data: intensityVoltageChartData(measurementCollections, timeFilter),
 		options: {
 			plugins: {
 				legend: {
@@ -302,8 +309,8 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 	/**
 	 * REQUIRED. The hash of the BpvDevice to show
 	 */
-	@property(hashProperty('bpv-device-hash'))
-	bpvDeviceHash!: ActionHash;
+	@property()
+	arduinoSerialNumber!: string;
 
 	/**
 	 * @internal
@@ -355,14 +362,23 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 				<canvas
 					${ref(el => {
 						if (!el) return;
-						const chart = new Chart(
-							(el as HTMLCanvasElement).getContext('2d')!,
-							intensityVoltageChartConfig(
+						if (!this.chart) {
+							this.chart = new Chart(
+								(el as HTMLCanvasElement).getContext('2d')!,
+								intensityVoltageChartConfig(
+									measurementsCollections.map(r => r.entry),
+									this.timeFilter,
+								),
+							);
+							setTimeout(() => this.chart!.resize(), 1);
+						} else {
+							const data = intensityVoltageChartData(
 								measurementsCollections.map(r => r.entry),
 								this.timeFilter,
-							),
-						);
-						setTimeout(() => chart.resize(), 1);
+							);
+							this.chart.data = data;
+							this.chart.update();
+						}
 					})}
 				></canvas>
 			</div>
@@ -377,7 +393,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 	) {
 		return html`
 			<sl-card style="flex: 1; display: flex;">
-				<div style="position: relative; flex: 1; display: flex;">
+				<div style="flex: 1; display: flex;">
 					${measurementsCollections.length === 0
 						? html`
 								<div
@@ -396,8 +412,23 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										class="placeholder"
 										style="max-width: 40rem; text-align: center"
 										>${msg(
-											'To collect measurements from this BPV device, connect it to this computer through a USB cable, and PRESS THE RESET BUTTON ON THE ARDUINO DEVICE.',
-										)}</span
+											'To collect measurements from this BPV device, connect it to this computer through a USB cable, and',
+										)}&nbsp;<strong
+											>${msg('press the reset button on the arduino device')}</strong
+										></span
+									>
+									<span
+										class="placeholder"
+										style="max-width: 40rem; text-align: center"
+										>${msg('OR')}&nbsp;</span
+									>
+									<span
+										class="placeholder"
+										style="max-width: 40rem; text-align: center"
+										>${msg(
+											'extract the SD card from the BPV device and insert it in this computer.',
+										)}</strong
+										></span
 									>
 								</div>
 							`
@@ -405,6 +436,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 								<sl-tab-group
 									style="flex: 1"
 									@sl-tab-show=${(e: CustomEvent) => {
+										this.chart = undefined;
 										this.selectedTab = e.detail.name;
 									}}
 								>
@@ -457,13 +489,14 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 
 	allMeasurementsCollections() {
 		const allMeasurements = this.livingPowerStore.bpvDevices
-			.get(this.bpvDeviceHash)
+			.get(this.arduinoSerialNumber)
 			.measurementCollections.live.get();
 		if (allMeasurements.status !== 'completed') return allMeasurements;
 
 		const allMeasurementsEntries = joinAsync(
 			Array.from(allMeasurements.value.values()).map(mc => mc.entry.get()),
 		);
+
 		return allMeasurementsEntries;
 	}
 
@@ -503,7 +536,8 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 			}
 			sl-tab-panel::part(base) {
 				width: 100%;
-				height: 100%;
+				display: flex;
+				flex: 1;
 			}
 			sl-tab-group::part(base) {
 				display: flex;
@@ -514,8 +548,8 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 				--padding: 0;
 			}
 			.tab-content {
-				width: 100%;
-				height: 100%;
+				flex: 1;
+				max-height: 100%;
 			}
 		`,
 	];

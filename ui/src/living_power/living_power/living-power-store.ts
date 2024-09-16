@@ -1,7 +1,9 @@
 import {
 	AsyncComputed,
+	AsyncResult,
 	AsyncSignal,
 	AsyncState,
+	JoinAsyncOptions,
 	Signal,
 	allRevisionsOfEntrySignal,
 	collectionSignal,
@@ -9,15 +11,18 @@ import {
 	deletesForEntrySignal,
 	fromPromise,
 	immutableEntrySignal,
+	joinAsync,
 	latestVersionOfEntrySignal,
 	liveLinksSignal,
 	pipe,
 } from '@holochain-open-dev/signals';
 import {
 	EntryRecord,
+	GetonlyMap,
 	HashType,
 	LazyHoloHashMap,
 	LazyMap,
+	decodePath,
 	retype,
 	slice,
 } from '@holochain-open-dev/utils';
@@ -28,6 +33,7 @@ import {
 	NewEntryAction,
 	Record,
 } from '@holochain/client';
+import { decode } from '@msgpack/msgpack';
 
 import {
 	collectMeasurementsFromSdcard,
@@ -36,8 +42,7 @@ import {
 import { connectedArduinos } from '../../arduinos/connected-arduinos.js';
 import { measurementsSdcards } from '../../arduinos/measurements-sdcards.js';
 import { LivingPowerClient } from './living-power-client.js';
-import { MeasurementCollection } from './types.js';
-import { BpvDevice } from './types.js';
+import { BpvDeviceInfo, MeasurementCollection } from './types.js';
 
 export function lazyLoadAndPoll<T>(
 	task: () => Promise<T>,
@@ -95,64 +100,69 @@ export class LivingPowerStore {
 
 	/** Bpv Device */
 
-	bpvDevices = new LazyHoloHashMap((bpvDeviceHash: ActionHash) => {
-		const original = immutableEntrySignal(() =>
-			this.client.getOriginalBpvDevice(bpvDeviceHash),
+	bpvDevices = new LazyMap((arduinoSerialNumber: string) => {
+		const pathHash = fromPromise(() =>
+			this.client.bpvDeviceHash(arduinoSerialNumber),
 		);
 		return {
-			latestVersion: latestVersionOfEntrySignal(this.client, () =>
-				this.client.getLatestBpvDevice(bpvDeviceHash),
-			),
-			original,
-			allRevisions: allRevisionsOfEntrySignal(this.client, () =>
-				this.client.getAllRevisionsForBpvDevice(bpvDeviceHash),
-			),
-			deletes: deletesForEntrySignal(this.client, bpvDeviceHash, () =>
-				this.client.getAllDeletesForBpvDevice(bpvDeviceHash),
-			),
-			connectedArduino: pipe(
-				this.connectedArduinos,
-				_ => original,
-				(bpvDevice, arduinos) => {
-					const serialPortInfo = arduinos.find(
-						a =>
-							a.port_type?.UsbPort.serial_number ===
-							bpvDevice.entry.arduino_serial_number,
-					);
-
-					if (!serialPortInfo) return undefined;
-					return {
-						serialPortInfo,
-						lastMeasurement: lazyLoadAndPoll(
-							() => getLastMeasurement(serialPortInfo.port_name),
-							3000,
-						),
-					};
-				},
-			),
-			measurementSdcard: pipe(
-				this.measurementsSdcards,
-				_ => original,
-				(bpvDevice, sdcards) => {
-					const sdcardPath = sdcards[bpvDevice.entry.arduino_serial_number];
-					if (!sdcardPath) return undefined;
-					return {
-						sdcardPath,
-						measurements: fromPromise(() =>
-							collectMeasurementsFromSdcard(sdcardPath),
-						),
-					};
-				},
-			),
-			measurementCollections: {
-				live: pipe(
+			pathHash,
+			info: pipe(
+				pathHash,
+				hash =>
 					liveLinksSignal(
 						this.client,
-						bpvDeviceHash,
-						() =>
-							this.client.getMeasurementCollectionsForBpvDevice(bpvDeviceHash),
-						'BpvDeviceToMeasurementCollections',
+						hash,
+						() => this.client.getBpvDeviceInfo(arduinoSerialNumber),
+						'BpvDeviceToBpvDeviceInfo',
 					),
+				links => {
+					if (links.length === 0) return undefined;
+					const sortedLinks = links.sort(
+						(linkA, linkB) => linkB.timestamp - linkA.timestamp,
+					);
+					const latestLink = sortedLinks[0];
+
+					const info = decode(latestLink.tag) as BpvDeviceInfo;
+					return info;
+				},
+			),
+			connectedArduino: pipe(this.connectedArduinos, arduinos => {
+				const serialPortInfo = arduinos.find(
+					a => a.port_type?.UsbPort.serial_number === arduinoSerialNumber,
+				);
+
+				if (!serialPortInfo) return undefined;
+				return {
+					serialPortInfo,
+					lastMeasurement: lazyLoadAndPoll(
+						() => getLastMeasurement(serialPortInfo.port_name),
+						3000,
+					),
+				};
+			}),
+			measurementSdcard: pipe(this.measurementsSdcards, sdcards => {
+				const sdcardPath = sdcards[arduinoSerialNumber];
+				if (!sdcardPath) return undefined;
+				return {
+					sdcardPath,
+					measurements: fromPromise(() =>
+						collectMeasurementsFromSdcard(sdcardPath),
+					),
+				};
+			}),
+			measurementCollections: {
+				live: pipe(
+					pathHash,
+					hash =>
+						liveLinksSignal(
+							this.client,
+							hash,
+							() =>
+								this.client.getMeasurementCollectionsForBpvDevice(
+									arduinoSerialNumber,
+								),
+							'BpvDeviceToMeasurementCollections',
+						),
 					links =>
 						slice(
 							this.measurementCollections,
@@ -160,15 +170,17 @@ export class LivingPowerStore {
 						),
 				),
 				deleted: pipe(
-					deletedLinksSignal(
-						this.client,
-						bpvDeviceHash,
-						() =>
-							this.client.getDeletedMeasurementCollectionsForBpvDevice(
-								bpvDeviceHash,
-							),
-						'BpvDeviceToMeasurementCollections',
-					),
+					pathHash,
+					hash =>
+						deletedLinksSignal(
+							this.client,
+							hash,
+							() =>
+								this.client.getDeletedMeasurementCollectionsForBpvDevice(
+									arduinoSerialNumber,
+								),
+							'BpvDeviceToMeasurementCollections',
+						),
 					links =>
 						slice(
 							this.measurementCollections,
@@ -188,11 +200,12 @@ export class LivingPowerStore {
 			'AllBpvDevices',
 		),
 		allBpvDevices =>
-			slice(
+			sliceNormalMap(
 				this.bpvDevices,
-				allBpvDevices.map(l => l.target),
+				allBpvDevices.map(l => decodePath([l.tag])),
 			),
 	);
+
 	/** Measurement Collection */
 
 	measurementCollections = new LazyHoloHashMap(
@@ -210,4 +223,69 @@ export class LivingPowerStore {
 			),
 		}),
 	);
+}
+/**
+ * Create a new slice of this map that contains only the given keys
+ */
+export function sliceNormalMap<K, V>(
+	map: GetonlyMap<K, V>,
+	keys: K[],
+): ReadonlyMap<K, V> {
+	const newMap = new Map<K, V>();
+
+	for (const key of keys) {
+		const value = map.get(key);
+		if (value) newMap.set(key, value);
+	}
+	return newMap;
+}
+
+/**
+ * Create a new map maintaining the keys while mapping the values with the given mapping function
+ */
+export function mapValuesNormalMap<K, V, U>(
+	map: ReadonlyMap<K, V>,
+	mappingFn: (value: V, key: K) => U,
+): Map<K, U> {
+	const mappedMap = new Map<K, U>();
+
+	for (const [key, value] of map.entries()) {
+		mappedMap.set(key, mappingFn(value, key));
+	}
+	return mappedMap;
+}
+/**
+ * Joins all the results in a HoloHashMap of `AsyncResults`
+ */
+export function joinAsyncNormalMap<K, T>(
+	map: ReadonlyMap<K, AsyncResult<T>>,
+	joinOptions?: JoinAsyncOptions,
+): AsyncResult<ReadonlyMap<K, T>> {
+	const resultsArray = Array.from(map.entries()).map(([key, result]) => {
+		if (result.status !== 'completed') return result;
+		const value = [key, result.value] as [K, T];
+		return {
+			status: 'completed',
+			value,
+		} as AsyncResult<[K, T]>;
+	});
+	const arrayResult = joinAsync(resultsArray, joinOptions);
+
+	if (arrayResult.status !== 'completed') return arrayResult;
+
+	const value = new Map<K, T>(arrayResult.value);
+	return {
+		status: 'completed',
+		value,
+	} as AsyncResult<ReadonlyMap<K, T>>;
+}
+export function pickByNormalMap<K, V>(
+	map: ReadonlyMap<K, V>,
+	filter: (value: V, key: K) => boolean,
+): Map<K, V> {
+	const entries = Array.from(map.entries()).filter(([key, value]) =>
+		filter(value, key),
+	);
+
+	return new Map<K, V>(entries);
 }

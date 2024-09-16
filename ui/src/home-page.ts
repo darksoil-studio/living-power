@@ -34,7 +34,12 @@ import './living_power/living_power/elements/bpv-device-detail.js';
 import './living_power/living_power/elements/bpv-device-measurements.js';
 import './living_power/living_power/elements/collect-measurements-alert.js';
 import './living_power/living_power/elements/new-arduino-connected-alert.js';
-import { LivingPowerStore } from './living_power/living_power/living-power-store.js';
+import {
+	LivingPowerStore,
+	joinAsyncNormalMap,
+	mapValuesNormalMap,
+	pickByNormalMap,
+} from './living_power/living_power/living-power-store.js';
 
 @customElement('home-page')
 export class HomePage extends SignalWatcher(LitElement) {
@@ -63,11 +68,9 @@ export class HomePage extends SignalWatcher(LitElement) {
 			path: '',
 			enter: async () => {
 				const devices = await toPromise(this._livingPowerStore.allBpvDevices);
+
 				if (devices.size === 0) this.routes.goto('no-devices');
-				else
-					this.routes.goto(
-						`bpv-devices/${encodeHashToBase64(Array.from(devices.keys())[0])}`,
-					);
+				else this.routes.goto(`bpv-devices/${Array.from(devices.keys())[0]}`);
 				return false;
 			},
 		},
@@ -77,28 +80,26 @@ export class HomePage extends SignalWatcher(LitElement) {
 			enter: async () => {
 				const devices = await toPromise(this._livingPowerStore.allBpvDevices);
 				if (devices.size !== 0)
-					this.routes.goto(
-						`bpv-devices/${encodeHashToBase64(Array.from(devices.keys())[0])}`,
-					);
+					this.routes.goto(`bpv-devices/${Array.from(devices.keys())[0]}`);
 				return true;
 			},
 		},
 		{
-			path: 'bpv-devices/:bpvDeviceHash',
+			path: 'bpv-devices/:arduinoSerialNumber',
 			render: params =>
 				html`<bpv-device-measurements
 					style="flex: 1"
-					.bpvDeviceHash=${decodeHashFromBase64(params.bpvDeviceHash!)}
+					.arduinoSerialNumber=${params.arduinoSerialNumber}
 				></bpv-device-measurements>`,
 		},
 	]);
 
-	get selectedBpvDeviceHash(): ActionHash | undefined {
+	get selectedBpvDeviceHash(): string | undefined {
 		const pathname = this.routes.currentPathname();
 		if (!pathname.includes('bpv-devices/')) return undefined;
 		const split = pathname.split('bpv-devices/');
 		if (split.length === 1) return undefined;
-		return decodeHashFromBase64(split[1]);
+		return split[1];
 	}
 
 	renderNoDevices() {
@@ -162,11 +163,17 @@ export class HomePage extends SignalWatcher(LitElement) {
 		const devices = this._livingPowerStore.allBpvDevices.get();
 		if (devices.status !== 'completed') return devices;
 
-		const values = joinAsyncMap(
-			mapValues(devices.value, d => d.latestVersion.get()),
+		const values = joinAsyncNormalMap(
+			mapValuesNormalMap(devices.value, d => d.info.get()),
 		);
+		if (values.status !== 'completed') return values;
 
-		return values;
+		const devicesInfos = pickByNormalMap(values.value, info => !!info);
+
+		return {
+			status: 'completed' as const,
+			value: devicesInfos,
+		};
 	}
 
 	renderTitle() {
@@ -178,16 +185,14 @@ export class HomePage extends SignalWatcher(LitElement) {
 			return html`<span class="title">${msg('Living Power')}</span>`;
 
 		return html`<sl-select
-			.value=${encodeHashToBase64(
-				Array.from(allBpvDevicesLatest.value.keys())[0],
-			)}
+			.value=${Array.from(allBpvDevicesLatest.value.keys())[0]}
 		>
 			<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDeveloperBoard)}></sl-icon>
 
 			${Array.from(allBpvDevicesLatest.value.entries()).map(
-				([deviceHash, device]) =>
-					html`<sl-option value="${encodeHashToBase64(deviceHash)}"
-						>${device.entry.name}</sl-option
+				([arduinoSerialNumber, info]) =>
+					html`<sl-option value="${arduinoSerialNumber}"
+						>${info?.name}</sl-option
 					>`,
 			)}
 		</sl-select>`;
@@ -195,7 +200,7 @@ export class HomePage extends SignalWatcher(LitElement) {
 
 	render() {
 		return html`
-			<div class="column fill" style="position: relative">
+			<div class="column" style="flex: 1">
 				<div class="row top-bar">
 					<div class="row" style="flex: 1; gap: 12px; ">
 						${this.renderTitle()}
@@ -203,17 +208,15 @@ export class HomePage extends SignalWatcher(LitElement) {
 
 					<div class="row" style="gap: 16px" slot="actionItems"></div>
 				</div>
-				<div class="column fill" style="margin: 16px">
+				<div class="column " style="flex: 1; padding: 16px">
 					${this.routes.outlet()}
 					<div
 						class="column"
 						style="gap: 12px; position: fixed; right: 16px; bottom: 16px"
 					>
 						<new-arduino-connected-alert
-							@bpv-device-created=${(e: CustomEvent) =>
-								this.routes.goto(
-									`bpv-devices/${encodeHashToBase64(e.detail.bpvDeviceHash)}`,
-								)}
+							@bpv-device-added=${(e: CustomEvent) =>
+								this.routes.goto(`bpv-devices/${e.detail.arduinoSerialNumber}`)}
 						></new-arduino-connected-alert>
 						<collect-measurements-alert></collect-measurements-alert>
 					</div>
