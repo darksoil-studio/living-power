@@ -19,18 +19,16 @@
       imports = [ ./happ.nix ];
 
       systems = builtins.attrNames inputs.holonix.devShells;
-      perSystem = { inputs', config, pkgs, system, ... }: {
+      perSystem = { inputs', config, lib, pkgs, system, ... }: {
         devShells.default = pkgs.mkShell {
           inputsFrom = [
             inputs'.p2p-shipyard.devShells.holochainTauriDev
             inputs'.hc-infra.devShells.synchronized-pnpm
             inputs'.holonix.devShells.default
           ];
-          packages = [
-            inputs'.scaffolding.packages.hc-scaffold-app-template
-            pkgs.arduino-ide
-            pkgs.udev
-          ];
+          packages =
+            [ pkgs.udev inputs'.scaffolding.packages.hc-scaffold-app-template ]
+            ++ (lib.optionals pkgs.stdenv.isLinux [ pkgs.arduino-ide ]);
         };
         devShells.androidDev = pkgs.mkShell {
           inputsFrom = [
