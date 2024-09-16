@@ -117,7 +117,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.webhapp'
+          fileName: 'living-power.happ'
           out-file-path: 'workdir/'
 
       - name: build the app
@@ -183,7 +183,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.webhapp'
+          fileName: 'living-power.happ'
           out-file-path: 'workdir/'
 
       - name: build the app
@@ -236,7 +236,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.webhapp'
+          fileName: 'living-power.happ'
           out-file-path: 'workdir/'
 
       - name: build the app
