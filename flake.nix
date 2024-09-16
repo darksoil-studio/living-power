@@ -26,9 +26,11 @@
             inputs'.hc-infra.devShells.synchronized-pnpm
             inputs'.holonix.devShells.default
           ];
-          packages =
-            [ pkgs.udev inputs'.scaffolding.packages.hc-scaffold-app-template ]
-            ++ (lib.optionals pkgs.stdenv.isLinux [ pkgs.arduino-ide ]);
+          packages = [ inputs'.scaffolding.packages.hc-scaffold-app-template ]
+            ++ (lib.optionals pkgs.stdenv.isLinux [
+              pkgs.arduino-ide
+              pkgs.udev
+            ]);
         };
         devShells.androidDev = pkgs.mkShell {
           inputsFrom = [
