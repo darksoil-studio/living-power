@@ -196,7 +196,6 @@ jobs:
         with:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
 
-
   release-tauri-app-linux:
     permissions: write-all
     needs: publish-happ
