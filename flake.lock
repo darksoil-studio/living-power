@@ -1251,11 +1251,11 @@
         "webkitgtknixpkgs": "webkitgtknixpkgs"
       },
       "locked": {
-        "lastModified": 1726588950,
-        "narHash": "sha256-YM3+WjdUYOFWiKGcrcMdLyDWbFDpc/7CNPKK0H3URnk=",
+        "lastModified": 1726598559,
+        "narHash": "sha256-vr8kbEz8IDwH4ml1XfIB1R5b1Tlabt9K+i40aBLTFss=",
         "owner": "darksoil-studio",
         "repo": "p2p-shipyard",
-        "rev": "f41ce25d0a05315321153049197d6e0d9b81c64d",
+        "rev": "647a00d2884e5ab1ed098246491834dee35a8fdb",
         "type": "github"
       },
       "original": {
