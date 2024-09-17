@@ -124,6 +124,7 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
                 HashMap::new(),
                 None,
                 None,
+                None,
             )
             .await?;
 
