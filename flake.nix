@@ -2,15 +2,14 @@
   description = "Template for Holochain app development";
 
   inputs = {
-    holonix.url = "github:holochain/holonix/main-0.3";
+    holonix.url = "github:holochain/holonix";
 
-    profiles.url = "github:holochain-open-dev/profiles/nixify";
-    p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard/develop";
+    p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard/next";
 
     nixpkgs.follows = "hc-infra/nixpkgs";
     flake-parts.follows = "holonix/flake-parts";
 
-    hc-infra.url = "github:holochain-open-dev/infrastructure";
+    hc-infra.url = "github:holochain-open-dev/infrastructure/next";
     scaffolding.url = "github:holochain-open-dev/templates";
   };
 

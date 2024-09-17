@@ -5,7 +5,7 @@
     "start": "AGENTS=1 pnpm network",
     "network": "pnpm build:happ && concurrently -k \"UI_PORT=1420 pnpm -F ui start\" \"pnpm launch\"",
     "launch": "concurrently-repeat \"pnpm tauri dev --no-watch\" $AGENTS",
-    "test": "pnpm run build:happ && nix flake check -L && pnpm -F tests test",
+    "test": "pnpm run build:happ && pnpm -F tests test",
     "build:happ": "nix build -L .#living_power_happ -o workdir/living-power.happ",
     "build:happ-release": "nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ",
     "package": "nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ && pnpm -F ui package && hc web-app pack workdir",
@@ -14,18 +14,18 @@
     "tauri": "tauri"
   },
   "devDependencies": {
+    "@eslint/js": "^8.57.1",
     "@holochain-playground/cli": "^0.1.1",
-    "@tauri-apps/cli": "^2.0.0-rc",
+    "@tauri-apps/cli": "2.0.0-rc.16",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
-    "@eslint/js": "^8.0.0",
     "concurrently": "^8.2.2",
-    "eslint": "^8.0.0",
+    "concurrently-repeat": "^0.0.1",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "new-port-cli": "^1.0.0",
-    "prettier": "^3.2.5",
-    "typescript-eslint": "^7.7.0",
-    "typescript": "^5.4.5",
-    "concurrently-repeat": "^0.0.1"
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^7.18.0"
   },
   "type": "module",
   "engines": {

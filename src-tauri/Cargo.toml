@@ -30,12 +30,13 @@ tempdir = "0.3.7"
 anyhow = "1"
 
 tauri = { version = "2.0.0-rc", features = [] }
-tauri-plugin-holochain = { git = "https://github.com/darksoil-studio/p2p-shipyard", branch = "develop" }
+tauri-plugin-holochain = { git = "https://github.com/darksoil-studio/p2p-shipyard", branch = "next" }
 tauri-plugin-log = "2.0.0-rc"
 
-holochain_client = { version = "0.5" }
-holochain_types = { version = "0.3.2" }
-lair_keystore = { version = "0.4.0" }
+holochain_client = { version = "0.6.0-dev" }
+holochain_types = { version = "0.4.0-dev" }
+lair_keystore = { version = "=0.5.0" }
+sqlformat = "=0.2.4"
 
 mountpoints = "0.2"
 serialport = { version = "4.3", features = ["serde"] }

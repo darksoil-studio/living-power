@@ -12,8 +12,8 @@
       inherit system;
       dnaManifest = ./workdir/dna.yaml;
       zomes = {
-        profiles_integrity = inputs'.profiles.packages.profiles_integrity;
-        profiles = inputs'.profiles.packages.profiles;
+        # profiles_integrity = inputs'.profiles.packages.profiles_integrity;
+        # profiles = inputs'.profiles.packages.profiles;
         # Include here the zome packages for this DNA, e.g.:
         # profiles_integrity = inputs'.profiles.packages.profiles_integrity;
         # This overrides all the "bundled" properties for the DNA manifest

@@ -20,7 +20,7 @@ test('create MeasurementCollection', async () => {
 		const { alice, bob } = await setup(scenario);
 
 		// Alice creates a MeasurementCollection
-		const measurementCollection: EntryRecord<MeasurementCollection> =
+		const measurementCollection: ActionHash[] =
 			await alice.store.client.createMeasurementCollection(
 				await sampleMeasurementCollection(alice.store.client),
 			);
@@ -35,9 +35,9 @@ test('create and read MeasurementCollection', async () => {
 		const sample = await sampleMeasurementCollection(alice.store.client);
 
 		// Alice creates a MeasurementCollection
-		const measurementCollection: EntryRecord<MeasurementCollection> =
+		const measurementCollectionsHashes: ActionHash[] =
 			await alice.store.client.createMeasurementCollection(sample);
-		assert.ok(measurementCollection);
+		assert.ok(measurementCollectionsHashes);
 
 		// Wait for the created entry to be propagated to the other node.
 		await dhtSync([alice.player, bob.player], alice.player.cells[0].cell_id[0]);
@@ -45,7 +45,7 @@ test('create and read MeasurementCollection', async () => {
 		// Bob gets the created MeasurementCollection
 		const createReadOutput: EntryRecord<MeasurementCollection> =
 			await toPromise(
-				bob.store.measurementCollections.get(measurementCollection.actionHash)
+				bob.store.measurementCollections.get(measurementCollectionsHashes[0])
 					.entry,
 			);
 		assert.deepEqual(sample, cleanNodeDecoding(createReadOutput.entry));
@@ -57,16 +57,16 @@ test('create and delete MeasurementCollection', async () => {
 		const { alice, bob } = await setup(scenario);
 
 		// Alice creates a MeasurementCollection
-		const measurementCollection: EntryRecord<MeasurementCollection> =
+		const measurementCollectionsHashes: ActionHash[] =
 			await alice.store.client.createMeasurementCollection(
 				await sampleMeasurementCollection(alice.store.client),
 			);
-		assert.ok(measurementCollection);
+		assert.ok(measurementCollectionsHashes);
 
 		// Alice deletes the MeasurementCollection
 		const deleteActionHash =
 			await alice.store.client.deleteMeasurementCollection(
-				measurementCollection.actionHash,
+				measurementCollectionsHashes[0],
 			);
 		assert.ok(deleteActionHash);
 
@@ -75,7 +75,7 @@ test('create and delete MeasurementCollection', async () => {
 
 		// Bob tries to get the deleted MeasurementCollection
 		const deletes: Array<SignedActionHashed<Delete>> = await toPromise(
-			bob.store.measurementCollections.get(measurementCollection.actionHash)
+			bob.store.measurementCollections.get(measurementCollectionsHashes[0])
 				.deletes,
 		);
 		assert.equal(deletes.length, 1);

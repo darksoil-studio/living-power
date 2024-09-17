@@ -10,11 +10,6 @@ integrity:
     bundled: ../../../target/wasm32-unknown-unknown/release/living_power_integrity.wasm
     dependencies: null
     dylib: null
-  - name: profiles_integrity
-    hash: null
-    bundled: <NIX_PACKAGE>
-    dependencies: null
-    dylib: null
 coordinator:
   zomes:
   - name: living_power
@@ -22,10 +17,4 @@ coordinator:
     bundled: ../../../target/wasm32-unknown-unknown/release/living_power.wasm
     dependencies:
     - name: living_power_integrity
-    dylib: null
-  - name: profiles
-    hash: null
-    bundled: <NIX_PACKAGE>
-    dependencies:
-    - name: profiles_integrity
     dylib: null
