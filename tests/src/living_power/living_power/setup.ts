@@ -4,12 +4,15 @@ import { LivingPowerClient } from '../../../../ui/src/living_power/living_power/
 import { LivingPowerStore } from '../../../../ui/src/living_power/living_power/living-power-store.js';
 import { appPath } from '../../app-path.js';
 
-export async function setup(scenario: Scenario) {
+export async function setup(
+	scenario: Scenario,
+	appBundlePath: string = appPath,
+) {
 	// Add 2 players with the test hApp to the Scenario. The returned players
 	// can be destructured.
 	const [alice, bob] = await scenario.addPlayersWithApps([
-		{ appBundleSource: { path: appPath } },
-		{ appBundleSource: { path: appPath } },
+		{ appBundleSource: { path: appBundlePath } },
+		{ appBundleSource: { path: appBundlePath } },
 	]);
 
 	// Shortcut peer discovery through gossip and register all agents in every

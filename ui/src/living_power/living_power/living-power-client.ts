@@ -1,6 +1,7 @@
 import {
 	EntryRecord,
 	ZomeClient,
+	decodePath,
 	isSignalFromCellWithRole,
 } from '@holochain-open-dev/utils';
 import {

@@ -8,8 +8,8 @@ pub struct BpvDeviceInfo {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetBpvDeviceInfoInput {
-    arduino_serial_number: String,
-    info: BpvDeviceInfo,
+    pub arduino_serial_number: String,
+    pub info: BpvDeviceInfo,
 }
 
 pub fn all_bpv_devices_path() -> Path {

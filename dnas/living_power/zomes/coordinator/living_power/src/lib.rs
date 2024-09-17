@@ -2,8 +2,11 @@ pub mod all_bpv_devices;
 pub mod measurement_collection;
 
 pub mod bpv_device;
+use bpv_device::{set_bpv_device_info, BpvDeviceInfo, SetBpvDeviceInfoInput};
 use hdk::prelude::*;
 use living_power_integrity::*;
+use measurement_collection::create_measurement_collections;
+use serde::de::DeserializeOwned;
 #[hdk_extern]
 pub fn init() -> ExternResult<InitCallbackResult> {
     Ok(InitCallbackResult::Pass)
@@ -34,6 +37,105 @@ pub enum Signal {
         link_type: LinkTypes,
     },
 }
+
+fn call_old_cell<P, R>(old_cell: CellId, fn_name: &str, payload: P) -> ExternResult<R>
+where
+    P: serde::Serialize + std::fmt::Debug,
+    R: std::fmt::Debug + DeserializeOwned,
+{
+    let response = call(
+        CallTargetCell::OtherCell(old_cell),
+        "living_power",
+        fn_name.into(),
+        None,
+        payload,
+    )?;
+    let ZomeCallResponse::Ok(result) = response else {
+        return Err(wasm_error!(WasmErrorInner::Guest(format!(
+            "Error calling old cell's zome function {fn_name}: {response:?}"
+        ))));
+    };
+
+    let r: R = result.decode::<R>().map_err(|err| {
+        wasm_error!(WasmErrorInner::Guest(format!(
+            "Error decoding result from old cell's zome function {fn_name}: {err:?}"
+        )))
+    })?;
+
+    Ok(r)
+}
+
+#[hdk_extern]
+pub fn migrate_from_old_cell(old_cell: CellId) -> ExternResult<()> {
+    // Get all the BPVs
+    let links: Vec<Link> = call_old_cell(old_cell.clone(), "get_all_bpv_devices", ())?;
+
+    let arduino_serial_numbers: Vec<String> = links
+        .into_iter()
+        .filter_map(|link| {
+            Component::try_from(SerializedBytes::from(UnsafeBytes::from(
+                link.tag.into_inner(),
+            )))
+            .ok()
+        })
+        .filter_map(|component| String::try_from(&component).ok())
+        .collect();
+
+    // For each BPV
+    // - Get the BPV info, and commit it
+    // - Get all measurements, and commit them
+    for arduino_serial_number in arduino_serial_numbers {
+        let mut links: Vec<Link> = call_old_cell(
+            old_cell.clone(),
+            "get_bpv_device_info",
+            arduino_serial_number.clone(),
+        )?;
+
+        links.sort_by(|link_a, link_b| link_b.timestamp.cmp(&link_a.timestamp));
+
+        if let Some(link) = links.first() {
+            let bytes = SerializedBytes::from(UnsafeBytes::from(link.tag.clone().into_inner()));
+            let info = BpvDeviceInfo::try_from(bytes).map_err(|err| {
+                wasm_error!(WasmErrorInner::Guest(format!(
+                    "Error decoding BpvDeviceInfo from link tag {err:?}"
+                )))
+            })?;
+
+            set_bpv_device_info(SetBpvDeviceInfoInput {
+                info,
+                arduino_serial_number: arduino_serial_number.clone(),
+            })?;
+        }
+        let links: Vec<Link> = call_old_cell(
+            old_cell.clone(),
+            "get_measurement_collections_for_bpv_device",
+            arduino_serial_number.clone(),
+        )?;
+        let measurement_collections_actions_hashes: Vec<ActionHash> = links
+            .into_iter()
+            .filter_map(|link| link.target.into_action_hash())
+            .collect();
+
+        for measurement_collection_hash in measurement_collections_actions_hashes {
+            let record: Record = call_old_cell(
+                old_cell.clone(),
+                "get_measurement_collection",
+                measurement_collection_hash,
+            )?;
+
+            let Some(entry) = record.entry().as_option().cloned() else {
+                continue;
+            };
+
+            let measurement_collection = MeasurementCollection::try_from(entry)?;
+
+            create_measurement_collections(measurement_collection)?;
+        }
+    }
+
+    Ok(())
+}
+
 #[hdk_extern(infallible)]
 pub fn post_commit(committed_actions: Vec<SignedActionHashed>) {
     for action in committed_actions {

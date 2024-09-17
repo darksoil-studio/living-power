@@ -18,7 +18,7 @@ test('create a BpvDevice and get all bpv devices', async () => {
 		});
 
 		// Bob adds a BpvDevice
-		await alice.store.client.setBpvDeviceInfo('someserialnumber', {
+		await bob.store.client.setBpvDeviceInfo('someserialnumber', {
 			name: 'bobsdevice',
 		});
 

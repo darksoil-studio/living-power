@@ -202,7 +202,9 @@ export class LivingPowerStore {
 		allBpvDevices =>
 			sliceNormalMap(
 				this.bpvDevices,
-				allBpvDevices.map(l => decodePath([l.tag])),
+				allBpvDevices
+					.map(l => decodePath([l.tag]))
+					.filter(deviceName => deviceName !== 'all_bpv_devices'),
 			),
 	);
 
