@@ -3,9 +3,10 @@ import { mdiDownload } from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
-import { LitElement, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 type BrowserType = 'Windows' | 'MacOS Intel' | 'MacOS Silicon' | 'Linux';
@@ -26,6 +27,14 @@ function browserType(): BrowserType {
 		else return 'MacOS Silicon';
 	}
 	return 'Linux';
+}
+function download(url: string) {
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = url.split('/').pop()!;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
 }
 
 @customElement('download-installer-button')
@@ -58,19 +67,38 @@ export class DownloadInstallerButton extends LitElement {
 	render() {
 		const browser = browserType();
 		return html`<div style="display:flex; flex-direction:row;">
-			<sl-button href="${this.getUrlFor(browser)}">
+			<sl-button
+				href="${this.getUrlFor(browser)}"
+				variant="primary"
+				size="large"
+				class="no-border-radius-right"
+				style="width: 20em"
+			>
 				<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDownload)}></sl-icon>
-				${browser}</sl-button
+				Download installer for ${browser}</sl-button
 			>
 			<sl-dropdown
-				><sl-icon-button slot="trigger"> </sl-icon-button>
+				><sl-button
+					slot="trigger"
+					caret
+					variant="primary"
+					size="large"
+					class="no-border-radius-left"
+				>
+				</sl-button>
 				<sl-menu>
 					${allBrowsersTypes
 						.filter(b => b !== browser)
 						.map(
 							browser => html`
-								<sl-button href="${this.getUrlFor(browser)}"
-									>${browser}</sl-button
+								<sl-menu-item
+									@click=${() => download(this.getUrlFor(browser)!)}
+								>
+									<sl-icon
+										slot="prefix"
+										.src=${wrapPathInSvg(mdiDownload)}
+									></sl-icon>
+									${browser}</sl-menu-item
 								>
 							`,
 						)}
@@ -78,4 +106,15 @@ export class DownloadInstallerButton extends LitElement {
 			</sl-dropdown>
 		</div>`;
 	}
+
+	static styles = css`
+		sl-button.no-border-radius-right::part(base) {
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+		}
+		sl-button.no-border-radius-left::part(base) {
+			border-top-left-radius: 0;
+			border-bottom-left-radius: 0;
+		}
+	`;
 }
