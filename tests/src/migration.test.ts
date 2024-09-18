@@ -91,5 +91,11 @@ test('migrate from the previous happ to the new version, assert that the data is
 		);
 
 		assert.equal(info2.name, 'alicesdevice');
+
+		const measurements = await toPromise(
+			aliceStore2.bpvDevices.get('someserialnumber').measurementCollections
+				.live,
+		);
+		assert.equal(measurements.size, 2);
 	});
 });

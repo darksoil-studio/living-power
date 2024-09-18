@@ -1,18 +1,30 @@
-use holochain_types::prelude::AppBundle;
-use lair_keystore::dependencies::sodoken::{BufRead, BufWrite};
-use serialport::available_ports;
 use std::path::PathBuf;
 use std::{collections::HashMap, time::Duration};
+
+use anyhow::anyhow;
+use serialport::available_ports;
 use tauri::AppHandle;
+
+use holochain_client::{AppStatusFilter, ZomeCallTarget};
+use holochain_conductor_api::CellInfo;
+use holochain_types::prelude::{AppBundle, ExternIO};
+use lair_keystore::dependencies::sodoken::{BufRead, BufWrite};
 use tauri_plugin_holochain::{HolochainExt, HolochainPluginConfig, WANNetworkConfig};
+use tauri_plugin_log::Target;
 
 mod arduino;
 mod collect_measurements;
 mod sdcards;
 
-const APP_ID: &'static str = "living-power";
-const PRODUCTION_SIGNAL_URL: &'static str = "wss://signal.holo.host";
-const PRODUCTION_BOOTSTRAP_URL: &'static str = "https://bootstrap.holo.host";
+// const PRODUCTION_SIGNAL_URL: &'static str = "wss://signal.holo.host";
+// const PRODUCTION_BOOTSTRAP_URL: &'static str = "https://bootstrap.holo.host";
+
+const APP_ID_PREFIX: &'static str = "living-power";
+const DNA_HASH: &'static str = include_str!("../../workdir/living_power_dna-hash");
+
+fn app_id() -> String {
+    format!("{APP_ID_PREFIX}-{DNA_HASH}")
+}
 
 pub fn happ_bundle() -> AppBundle {
     let bytes = include_bytes!("../../workdir/living-power.happ");
@@ -25,6 +37,9 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Warn)
+                .target(Target::new(tauri_plugin_log::TargetKind::LogDir {
+                    file_name: None,
+                }))
                 .build(),
         )
         .plugin(tauri_plugin_process::init())
@@ -50,12 +65,7 @@ pub fn run() {
 
                 // After set up we can be sure our app is installed and up to date, so we can just open it
                 app.holochain()?
-                    .main_window_builder(
-                        String::from("main"),
-                        false,
-                        Some(String::from("living-power")),
-                        None,
-                    )
+                    .main_window_builder(String::from("main"), false, Some(app_id()), None)
                     .await?
                     .build()?;
 
@@ -111,33 +121,75 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
     let admin_ws = handle.holochain()?.admin_websocket().await?;
 
     let installed_apps = admin_ws
-        .list_apps(None)
+        .list_apps(Some(AppStatusFilter::Running))
         .await
         .map_err(|err| tauri_plugin_holochain::Error::ConductorApiError(err))?;
 
-    // DeepKey comes preinstalled as the first app
-    if installed_apps
+    let app_is_already_installed = installed_apps
         .iter()
-        .find(|app| app.installed_app_id.as_str().eq(APP_ID))
-        .is_none()
-    {
+        .find(|app| app.installed_app_id.as_str().eq(&app_id()))
+        .is_some();
+
+    if !app_is_already_installed {
+        let previous_app = installed_apps
+            .iter()
+            .find(|app| app.installed_app_id.as_str().starts_with(APP_ID_PREFIX));
+
+        let agent_key = previous_app.map(|app| app.agent_pub_key.clone());
+
         handle
             .holochain()?
             .install_app(
-                String::from(APP_ID),
+                String::from(app_id()),
                 happ_bundle(),
                 HashMap::new(),
                 None,
-                None,
+                agent_key,
                 None,
             )
             .await?;
+
+        if let Some(previous_app) = previous_app {
+            let Some(Some(CellInfo::Provisioned(previous_cell_info))) = previous_app
+                .cell_info
+                .get("living_power")
+                .map(|c| c.first())
+            else {
+                log::error!(
+                    "'living_power' cell was not found in previous app {}",
+                    previous_app.installed_app_id
+                );
+                return Ok(());
+            };
+
+            let previous_cell_id = previous_cell_info.cell_id.clone();
+
+            let app_ws = handle.holochain()?.app_websocket(app_id()).await?;
+            let migration_result = app_ws
+                .call_zome(
+                    ZomeCallTarget::RoleName("living_power".into()),
+                    "living_power".into(),
+                    "migrate_from_old_cell".into(),
+                    ExternIO::encode(previous_cell_id)?,
+                )
+                .await;
+
+            if let Err(err) = migration_result {
+                log::error!("Error migrating data from the previous version of the app: {err:?}",);
+                return Ok(());
+            }
+
+            admin_ws
+                .disable_app(previous_app.installed_app_id.clone())
+                .await
+                .map_err(|err| anyhow!("{err:?}"))?;
+        }
 
         Ok(())
     } else {
         handle
             .holochain()?
-            .update_app_if_necessary(String::from(APP_ID), happ_bundle())
+            .update_app_if_necessary(String::from(app_id()), happ_bundle())
             .await?;
 
         Ok(())

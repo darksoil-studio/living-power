@@ -6,8 +6,8 @@
     "network": "pnpm build:happ && concurrently -k \"UI_PORT=1420 pnpm -F ui start\" \"pnpm launch\"",
     "launch": "concurrently-repeat \"pnpm tauri dev --no-watch\" $AGENTS",
     "test": "pnpm run build:happ && pnpm -F tests test",
-    "build:happ": "nix build -L .#living_power_happ -o workdir/living-power.happ",
-    "build:happ-release": "nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ",
+    "build:happ": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ -o workdir/living-power.happ",
+    "build:happ-release": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ",
     "package": "nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ && pnpm -F ui package && hc web-app pack workdir",
     "network:android": "pnpm build:happ && concurrently -k \"pnpm local-services\" \"UI_PORT=1420 pnpm -F ui start\" \"pnpm tauri dev\" \"pnpm tauri android dev\"",
     "build:zomes": "CARGO_TARGET_DIR=target cargo build --release --target wasm32-unknown-unknown --workspace --exclude living-power",
@@ -30,6 +30,5 @@
   "type": "module",
   "engines": {
     "pnpm": ">=9.0.0"
-  },
-  "packageManager": "pnpm@9.7.1+sha512.faf344af2d6ca65c4c5c8c2224ea77a81a5e8859cbc4e06b1511ddce2f0151512431dd19e6aff31f2c6a8f5f2aced9bd2273e1fed7dd4de1868984059d2c4247"
+  }
 }

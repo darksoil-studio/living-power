@@ -2,6 +2,7 @@
 manifest_version: "1"
 name: living-power
 description: ~
+allow_deferred_memproofs: false
 roles:
   - name: living_power
     provisioning:

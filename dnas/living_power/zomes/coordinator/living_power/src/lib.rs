@@ -123,6 +123,14 @@ pub fn migrate_from_old_cell(old_cell: CellId) -> ExternResult<()> {
                 measurement_collection_hash,
             )?;
 
+            let Some(entry_hash) = record.signed_action().action().entry_hash() else {
+                continue;
+            };
+
+            if let Some(_) = get(entry_hash.clone(), GetOptions::default())? {
+                continue;
+            }
+
             let Some(entry) = record.entry().as_option().cloned() else {
                 continue;
             };
