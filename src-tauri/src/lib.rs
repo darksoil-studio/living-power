@@ -137,8 +137,6 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
 
         let agent_key = previous_app.map(|app| app.agent_pub_key.clone());
 
-        log::error!("asdf {}", app_id());
-
         handle
             .holochain()?
             .install_app(
@@ -152,6 +150,7 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
             .await?;
 
         if let Some(previous_app) = previous_app {
+            log::warn!("Migrating from old app {}", previous_app.installed_app_id);
             let Some(Some(CellInfo::Provisioned(previous_cell_info))) = previous_app
                 .cell_info
                 .get("living_power")
@@ -212,7 +211,7 @@ fn wan_network_config() -> Option<WANNetworkConfig> {
 }
 
 fn holochain_dir() -> PathBuf {
-    if tauri::is_dev() {
+    if !tauri::is_dev() {
         let tmp_dir =
             tempdir::TempDir::new("living-power").expect("Could not create temporary directory");
 
