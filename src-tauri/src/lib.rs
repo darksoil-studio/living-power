@@ -211,7 +211,7 @@ fn wan_network_config() -> Option<WANNetworkConfig> {
 }
 
 fn holochain_dir() -> PathBuf {
-    if !tauri::is_dev() {
+    if tauri::is_dev() {
         let tmp_dir =
             tempdir::TempDir::new("living-power").expect("Could not create temporary directory");
 
