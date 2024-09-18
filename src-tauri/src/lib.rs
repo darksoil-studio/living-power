@@ -23,7 +23,7 @@ const APP_ID_PREFIX: &'static str = "living-power";
 const DNA_HASH: &'static str = include_str!("../../workdir/living_power_dna-hash");
 
 fn app_id() -> String {
-    format!("{APP_ID_PREFIX}-{DNA_HASH}")
+    format!("{APP_ID_PREFIX}-{}", DNA_HASH.trim())
 }
 
 pub fn happ_bundle() -> AppBundle {
@@ -136,6 +136,8 @@ async fn setup(handle: AppHandle) -> anyhow::Result<()> {
             .find(|app| app.installed_app_id.as_str().starts_with(APP_ID_PREFIX));
 
         let agent_key = previous_app.map(|app| app.agent_pub_key.clone());
+
+        log::error!("asdf {}", app_id());
 
         handle
             .holochain()?
