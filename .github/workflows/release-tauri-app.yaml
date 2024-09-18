@@ -49,7 +49,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: "workdir/living-power.happ"
+          artifacts: "workdir/living-power.happ,workdir/living_power_dna-hash"
           body: "See assets below to download and install this version."
           name: Living Power v${{ steps.version.outputs.APP_VERSION }}
           tag: v${{ steps.version.outputs.APP_VERSION }}
@@ -117,7 +117,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.happ'
+          fileName: '*'
           out-file-path: 'workdir/'
 
       - name: build the app
@@ -179,7 +179,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.happ'
+          fileName: '*'
           out-file-path: 'workdir/'
 
       - name: build the app
@@ -244,7 +244,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.happ'
+          fileName: '*'
           out-file-path: 'workdir/'
 
       - name: build the app
@@ -298,7 +298,7 @@ jobs:
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
-          fileName: 'living-power.happ'
+          fileName: '*'
           out-file-path: 'workdir/'
 
       - name: build the app
