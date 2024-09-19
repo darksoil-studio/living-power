@@ -24,7 +24,9 @@
 			"icons/icon.icns",
 			"icons/icon.ico"
 		],
-		"createUpdaterArtifacts": true
+		"macOS": {
+			"entitlements": "entitlements.plist"
+		}
 	},
 	"plugins": {
 		"updater": {
