@@ -127,6 +127,7 @@ jobs:
         with:
           tauriScript: cargo tauri
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
+          includeUpdaterJson: true
 
   release-tauri-app-linux:
     permissions: write-all
@@ -186,6 +187,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
+          includeUpdaterJson: true
 
   release-tauri-app-windows:
     permissions: write-all
@@ -240,3 +242,4 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
+          includeUpdaterJson: true
