@@ -92,7 +92,7 @@ jobs:
 
       - name: Install and prepare
         run: |
-          cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch fix/ios-deployment-target
+          cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch dev
         
       - name: install Go stable
         uses: actions/setup-go@v4
