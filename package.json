@@ -1,34 +1,34 @@
 {
-  "name": "living-power-dev",
-  "private": true,
-  "scripts": {
-    "start": "AGENTS=1 pnpm network",
-    "network": "pnpm build:happ && concurrently -k \"UI_PORT=1420 pnpm -F ui start\" \"pnpm launch\"",
-    "launch": "concurrently-repeat \"pnpm tauri dev --no-watch\" $AGENTS",
-    "test": "pnpm run build:happ && pnpm -F tests test",
-    "build:happ": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ -o workdir/living-power.happ",
-    "build:happ-release": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ",
-    "package": "nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ && pnpm -F ui package && hc web-app pack workdir",
-    "network:android": "pnpm build:happ && concurrently -k \"pnpm local-services\" \"UI_PORT=1420 pnpm -F ui start\" \"pnpm tauri dev\" \"pnpm tauri android dev\"",
-    "build:zomes": "CARGO_TARGET_DIR=target cargo build --release --target wasm32-unknown-unknown --workspace --exclude living-power",
-    "tauri": "tauri"
-  },
-  "devDependencies": {
-    "@eslint/js": "^8.57.1",
-    "@holochain-playground/cli": "^0.1.1",
-    "@tauri-apps/cli": "2.0.0-rc.16",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
-    "concurrently": "^8.2.2",
-    "concurrently-repeat": "^0.0.1",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
-    "new-port-cli": "^1.0.0",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.2",
-    "typescript-eslint": "^7.18.0"
-  },
-  "type": "module",
-  "engines": {
-    "pnpm": ">=9.0.0"
-  }
+	"name": "living-power-dev",
+	"private": true,
+	"scripts": {
+		"start": "AGENTS=1 pnpm network",
+		"network": "pnpm build:happ && concurrently -k \"pnpm -F ui start\" \"pnpm launch\"",
+		"launch": "concurrently-repeat \"pnpm tauri dev --no-watch\" $AGENTS",
+		"test": "pnpm run build:happ && pnpm -F tests test",
+		"build:happ": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ -o workdir/living-power.happ",
+		"build:happ-release": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ",
+		"package": "nix build -L .#living_power_happ.meta.release -o workdir/living-power.happ && pnpm -F ui package && hc web-app pack workdir",
+		"network:android": "pnpm build:happ && concurrently -k \"pnpm local-services\" \"UI_PORT=1420 pnpm -F ui start\" \"pnpm tauri dev\" \"pnpm tauri android dev\"",
+		"build:zomes": "CARGO_TARGET_DIR=target cargo build --release --target wasm32-unknown-unknown --workspace --exclude living-power",
+		"tauri": "tauri"
+	},
+	"devDependencies": {
+		"@eslint/js": "^8.57.1",
+		"@holochain-playground/cli": "^0.1.1",
+		"@tauri-apps/cli": "2.0.0-rc.16",
+		"@trivago/prettier-plugin-sort-imports": "^4.3.0",
+		"concurrently": "^8.2.2",
+		"concurrently-repeat": "^0.0.1",
+		"eslint": "^8.57.1",
+		"eslint-config-prettier": "^9.1.0",
+		"new-port-cli": "^1.0.0",
+		"prettier": "^3.3.3",
+		"typescript": "^5.6.2",
+		"typescript-eslint": "^7.18.0"
+	},
+	"type": "module",
+	"engines": {
+		"pnpm": ">=9.0.0"
+	}
 }
