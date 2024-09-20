@@ -67,6 +67,7 @@ pub fn run() {
                 app.holochain()?
                     .main_window_builder(String::from("main"), false, Some(app_id()), None)
                     .await?
+                    .title(String::from("Living Power"))
                     .build()?;
 
                 // Keep sending data to the arduinos so that they know they are still
