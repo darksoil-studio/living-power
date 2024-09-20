@@ -59,19 +59,19 @@
 				document.body.classList = theme === 'dark' ? 'sl-theme-dark' : '';
 			}
 
-			if (
-				window.matchMedia &&
-				window.matchMedia('(prefers-color-scheme: dark)').matches
-			) {
-				// dark mode
-				setTheme('dark');
-			}
-			window
-				.matchMedia('(prefers-color-scheme: dark)')
-				.addEventListener('change', event => {
-					const newColorScheme = event.matches ? 'dark' : 'light';
-					setTheme(newColorScheme);
-				});
+			//if (
+			//	window.matchMedia &&
+			//	window.matchMedia('(prefers-color-scheme: dark)').matches
+			//) {
+			//	// dark mode
+			//	setTheme('dark');
+			//}
+			//window
+			//	.matchMedia('(prefers-color-scheme: dark)')
+			//	.addEventListener('change', event => {
+			//		const newColorScheme = event.matches ? 'dark' : 'light';
+			//		setTheme(newColorScheme);
+			//	});
 
 			setBasePath('shoelace');
 		</script>
