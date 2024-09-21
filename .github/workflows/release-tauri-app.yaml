@@ -131,7 +131,6 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         with:
-          tauriScript: cargo tauri
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
           includeUpdaterJson: true
 
