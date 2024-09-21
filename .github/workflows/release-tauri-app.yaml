@@ -88,12 +88,8 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           override: true
-          toolchain: 1.80.1
+          toolchain: 1.77.2
 
-      - name: Install and prepare
-        run: |
-          cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch dev
-        
       - name: install Go stable
         uses: actions/setup-go@v4
         with:
@@ -102,6 +98,7 @@ jobs:
       - name: Install and prepare
         run: |
           pnpm install
+          pnpm -F ui build 
 
       - name: Download release of the .happ
         uses: robinraju/release-downloader@v1.10
@@ -112,6 +109,15 @@ jobs:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
           fileName: '*'
           out-file-path: 'workdir/'
+
+      - name: Install and prepare
+        run: |
+          pnpm install
+          pnpm -F ui build 
+
+      - name: Build rust deps to workaround https://github.com/tauri-apps/tauri/issues/11054
+        run: |
+          cargo build --bins --features tauri/custom-protocol,tauri/native-tls --release
 
       - name: build the app
         uses: tauri-apps/tauri-action@v0
