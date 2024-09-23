@@ -48,14 +48,14 @@ void setup() {
   Serial.begin(9600);
   while(!Serial);
 
-    // disable battery charging
- if (!PMIC.begin()) {
+  // disable battery charging
+  if (!PMIC.begin()) {
     Serial.println("Failed to initialize PMIC!");
-   while (1);
- }
- if (!PMIC.disableCharge()) {
+    while (1);
+  }
+  if (!PMIC.disableCharge()) {
       Serial.println("Error disabling Charge mode");
-   }
+  }
 
   WiFi.end();
 
@@ -176,8 +176,6 @@ void loop() {
   float lightLevel = ENV.readIlluminance(); 
 
   // Read voltage
-  float voltage = analogRead(A0) * 3.3 / 4095;
-
   for (int i = 0; i < sampleSize; i++) {
     int a = analogRead(A0);
     samples.add(a);
