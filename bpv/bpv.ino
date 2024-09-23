@@ -17,8 +17,8 @@ const int chipSelect = 4;
 // 60000 = 1 minute N.B. 1 second needed to log a measurement
 // const unsigned long loggingInterval = 1799000; // log every 30 minutes allowing 1 second for recording a measurement
 // const unsigned long loggingInterval = 599000; // log every 10 minutes allowing 1 second for recording a measurement
-//const unsigned long loggingInterval = 3599000; // log every 1 hour allowing 1 second for recording a measurement
- const unsigned long loggingInterval = 59000; // log every 1 minute
+const unsigned long loggingInterval = 3599000; // log every 1 hour allowing 1 second for recording a measurement
+ // const unsigned long loggingInterval = 59000; // log every 1 minute
 
 // Define file name for storing the serial number
 const char* serialNumberFileName = "serial";
@@ -49,22 +49,22 @@ void setup() {
   while(!Serial);
 
     // disable battery charging
-//  if (!PMIC.begin()) {
-    //Serial.println("Failed to initialize PMIC!");
-//    while (1);
-//  }
-//  if (!PMIC.disableCharge()) {
-      //Serial.println("Error disabling Charge mode");
-//    }
+ if (!PMIC.begin()) {
+    Serial.println("Failed to initialize PMIC!");
+   while (1);
+ }
+ if (!PMIC.disableCharge()) {
+      Serial.println("Error disabling Charge mode");
+   }
 
-  //WiFi.end();
+  WiFi.end();
 
- // Connect to Wi-Fi and set RTC
-  //connectToWiFi();
-  //setTimeFromNTP();
+  // Connect to Wi-Fi and set RTC
+  connectToWiFi();
+  setTimeFromNTP();
 
   // Disconnect from Wi-Fi to save power
-  //WiFi.disconnect();
+  WiFi.disconnect();
   Serial.println("Disconnected from Wi-Fi");
 
   // deactivate crypto chip to reduce energy consumption
@@ -110,8 +110,6 @@ void setup() {
   	serialNumberDataFile.print(UniqueID[i], HEX);
   }
   serialNumberDataFile.close();
-
-  Serial.println("Finished setup");
 
   // Setting voltage 
   analogReference(AR_DEFAULT); 
@@ -178,15 +176,14 @@ void loop() {
   float lightLevel = ENV.readIlluminance(); 
 
   // Read voltage
-  // float voltage = analogRead(A0) * 3.3 / 4095;
+  float voltage = analogRead(A0) * 3.3 / 4095;
 
-  //for (int i = 0; i < sampleSize; i++) {
-  //  int a = analogRead(A0);
-  //  samples.add(a);
-  //}
-  //float voltage = samples.getMedian() * 3.3 / 4095;
-  //samples.clear();
-  float voltage = 333.9;
+  for (int i = 0; i < sampleSize; i++) {
+    int a = analogRead(A0);
+    samples.add(a);
+  }
+  float voltage = samples.getMedian() * 3.3 / 4095;
+  samples.clear();
   //Serial.print("Voltage= ");
   //Serial.println(voltage, 3);
 
@@ -195,11 +192,6 @@ void loop() {
 
   // Enter sleep mode
   LowPower.deepSleep(loggingInterval); 
-
-  // Enter sleep mode for 1 minute
-  // delay(1000); // Wait for 1 second to ensure any remaining data logging is completed
-  //LowPower.deepSleep(59000); // Enter sleep mode for 59 seconds
-  
 }
 
 void logData(float temperature, float humidity, float lightLevel, float voltage) {
