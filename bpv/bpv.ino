@@ -1,7 +1,7 @@
 #include <Arduino_MKRENV.h>
 #include <Wire.h>
 #include <SD.h>
-//#include <WiFiNINA.h>
+#include <WiFiNINA.h>
 #include <RTCZero.h>
 #include <ArduinoLowPower.h>
 #include <ArduinoECCX08.h>
