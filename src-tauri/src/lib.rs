@@ -1,8 +1,10 @@
 use std::path::PathBuf;
+use std::process::Command;
 use std::{collections::HashMap, time::Duration};
 
 use anyhow::anyhow;
 use serialport::available_ports;
+use tauri::utils::platform::current_exe;
 use tauri::AppHandle;
 
 use holochain_client::{AppStatusFilter, ZomeCallTarget};
@@ -31,8 +33,37 @@ pub fn happ_bundle() -> AppBundle {
     AppBundle::decode(bytes).expect("Failed to decode living-power happ")
 }
 
+fn move_executable_to_app_directory() -> anyhow::Result<()> {
+    if tauri::is_dev() {
+        return Ok(());
+    }
+    let current_executable = current_exe()?;
+    println!("Current executable: {current_executable:?}");
+    let executable_name = current_executable.file_name().expect("Could not get filename").to_str().expect("Could not get filename");
+    if !executable_name.ends_with(".app") {
+        return Ok(());
+    }
+
+    if current_executable.starts_with("/Applications") {
+        return Ok(());
+    }
+
+    std::fs::copy(current_executable.clone(), PathBuf::from("/Applications"))?;
+    std::fs::remove_file(current_executable.clone())?;
+
+    std::process::Command::new(format!("/Applications/{executable_name}"))
+      .spawn()?;
+
+    std::process::exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "macos")]
+    if let Err(err) = move_executable_to_app_directory() {
+        println!("Error moving the app to the /Applications directory: {err:?}");
+    }
+
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::default()
