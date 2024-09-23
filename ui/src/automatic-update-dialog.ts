@@ -8,6 +8,7 @@ import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 
 import { appStyles } from './app-styles.js';
+import { invoke } from '@tauri-apps/api/core';
 
 @customElement('automatic-update-dialog')
 export class AutomaticUpdateDialog extends SignalWatcher(LitElement) {
@@ -20,7 +21,13 @@ export class AutomaticUpdateDialog extends SignalWatcher(LitElement) {
 	@state()
 	contentLength: number | undefined;
 
+	@state()
+	shouldBeMovedToApplicationsDirectory = false;
+
 	async firstUpdated() {
+	    this.shouldBeMovedToApplicationsDirectory = await invoke("should_be_moved_to_applications_directory");
+		if (this.shouldBeMovedToApplicationsDirectory) return
+		
 		this.appUpdate = await check();
 		if (this.appUpdate) {
 			console.log(
@@ -53,6 +60,22 @@ export class AutomaticUpdateDialog extends SignalWatcher(LitElement) {
 	}
 
 	render() {
+		if (this.shouldBeMovedToApplicationsDirectory) 
+			return html`
+				<sl-dialog
+					open
+					no-header
+					@sl-request-close=${(e: CustomEvent) => {
+						e.preventDefault();
+					}}
+				>
+					<div class="column" style="gap: 24px">
+						<span class="title">${msg('App is not in the "Applications" directory')} </span>
+						<span>${msg('Please move the "Living Power.app" file to the "Applications" directory by dragging it and dropping it there and start the app again.')} </span>
+					</div>
+				</sl-dialog>
+			`;
+
 		if (!this.appUpdate) return html``;
 
 		return html`
@@ -63,7 +86,7 @@ export class AutomaticUpdateDialog extends SignalWatcher(LitElement) {
 					e.preventDefault();
 				}}
 			>
-				<div class="column" style="gap: 12px">
+				<div class="column" style="gap: 24px">
 					<span class="title">${msg('New update found')} </span>
 					<span>${msg('Installing update...')} </span>
 					<sl-progress-bar

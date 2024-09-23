@@ -18,6 +18,3 @@ path = "dnas/living_power/zomes/coordinator/living_power"
 
 [workspace.dependencies.living_power_integrity]
 path = "dnas/living_power/zomes/integrity/living_power"
-
-[patch.crates-io]
-holochain_client = { git ="https://github.com/holochain/holochain-client-rust",branch="develop" }

@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::process::Command;
 use std::{collections::HashMap, time::Duration};
 
 use anyhow::anyhow;
@@ -17,6 +16,7 @@ use tauri_plugin_log::Target;
 mod arduino;
 mod collect_measurements;
 mod sdcards;
+mod macos;
 
 // const PRODUCTION_SIGNAL_URL: &'static str = "wss://signal.holo.host";
 // const PRODUCTION_BOOTSTRAP_URL: &'static str = "https://bootstrap.holo.host";
@@ -33,36 +33,8 @@ pub fn happ_bundle() -> AppBundle {
     AppBundle::decode(bytes).expect("Failed to decode living-power happ")
 }
 
-fn move_executable_to_app_directory() -> anyhow::Result<()> {
-    if tauri::is_dev() {
-        return Ok(());
-    }
-    let current_executable = current_exe()?;
-    println!("Current executable: {current_executable:?}");
-    let executable_name = current_executable.file_name().expect("Could not get filename").to_str().expect("Could not get filename");
-    if !executable_name.ends_with(".app") {
-        return Ok(());
-    }
-
-    if current_executable.starts_with("/Applications") {
-        return Ok(());
-    }
-    std::fs::copy(current_executable.clone(), format!("/Applications/{executable_name}"))?;
-    std::fs::remove_file(current_executable.clone())?;
-
-    std::process::Command::new(format!("/Applications/{executable_name}"))
-      .spawn()?;
-
-    std::process::exit(0);
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    #[cfg(target_os = "macos")]
-    if let Err(err) = move_executable_to_app_directory() {
-        println!("Error moving the app to the /Applications directory: {err:?}");
-    }
-
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -78,6 +50,7 @@ pub fn run() {
             HolochainPluginConfig::new(holochain_dir(), wan_network_config()),
         ))
         .invoke_handler(tauri::generate_handler![
+            macos::should_be_moved_to_applications_directory,
             arduino::list_connected_arduinos,
             collect_measurements::collect_measurements,
             collect_measurements::get_last_measurement,
