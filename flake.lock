@@ -398,11 +398,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1727083248,
-        "narHash": "sha256-QfxiO4VUOvFFfSIYYdSMWf8D6eG4noQvUTUI3lZjDs8=",
+        "lastModified": 1727089071,
+        "narHash": "sha256-26MaxOqHIoJaZXNoIIogOZt3hT/ZI+khW5UN8vjsXzM=",
         "owner": "holochain-open-dev",
         "repo": "infrastructure",
-        "rev": "ddeb140c2181111d6f9ee164393da3bee9faacee",
+        "rev": "cb5703560743019e31eaf8313d388193f7595f1f",
         "type": "github"
       },
       "original": {
@@ -436,11 +436,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1727083248,
-        "narHash": "sha256-QfxiO4VUOvFFfSIYYdSMWf8D6eG4noQvUTUI3lZjDs8=",
+        "lastModified": 1727089071,
+        "narHash": "sha256-26MaxOqHIoJaZXNoIIogOZt3hT/ZI+khW5UN8vjsXzM=",
         "owner": "holochain-open-dev",
         "repo": "infrastructure",
-        "rev": "ddeb140c2181111d6f9ee164393da3bee9faacee",
+        "rev": "cb5703560743019e31eaf8313d388193f7595f1f",
         "type": "github"
       },
       "original": {
@@ -1219,7 +1219,7 @@
         "holonix": "holonix_4",
         "nixpkgs": [
           "p2p-shipyard",
-          "holonix",
+          "hc-infra",
           "nixpkgs"
         ],
         "rust-overlay": [
@@ -1230,11 +1230,11 @@
         "webkitgtknixpkgs": "webkitgtknixpkgs"
       },
       "locked": {
-        "lastModified": 1727083978,
-        "narHash": "sha256-888koBLSfKkPKF497S06EQTWTtJsScM4MyTFjcJdNBo=",
+        "lastModified": 1727090923,
+        "narHash": "sha256-FTYwkAx9CfFBN0/smKKmakfHL3HnK6WCSMpkSB9ERmI=",
         "owner": "darksoil-studio",
         "repo": "p2p-shipyard",
-        "rev": "51ec93c2c5b877a8e92c6b0c0e2052af72c1efc1",
+        "rev": "0a99d238edea6e138655490006cbbea5ba5ce347",
         "type": "github"
       },
       "original": {
