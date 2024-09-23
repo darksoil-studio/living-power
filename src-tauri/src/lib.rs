@@ -47,8 +47,7 @@ fn move_executable_to_app_directory() -> anyhow::Result<()> {
     if current_executable.starts_with("/Applications") {
         return Ok(());
     }
-
-    std::fs::copy(current_executable.clone(), PathBuf::from("/Applications"))?;
+    std::fs::copy(current_executable.clone(), format!("/Applications/{executable_name}"))?;
     std::fs::remove_file(current_executable.clone())?;
 
     std::process::Command::new(format!("/Applications/{executable_name}"))
