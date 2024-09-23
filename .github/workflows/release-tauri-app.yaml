@@ -225,6 +225,10 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "stable"
+          
+      - name: Install relic
+        run: |
+          go install github.com/sassoftware/relic/v8@latest
 
       - name: Install and prepare
         run: |
@@ -245,6 +249,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          AZURE_VAULT_ID: ${{ secrets.AZURE_VAULT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         with:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
           includeUpdaterJson: true

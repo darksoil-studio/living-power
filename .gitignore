@@ -37,3 +37,4 @@ storybook-static
 /.cargo/
 
 .direnv/
+src-tauri/gen/schemas
