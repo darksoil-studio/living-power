@@ -252,7 +252,7 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE/src-tauri"
           echo "{}" | \
-            jq '.tauri .bundle .windows += {"signCommand": "${{ env.WINDOWS_SIGN_COMMAND }}"}' > \
+            jq '.bundle .windows += {"signCommand": "${{ env.WINDOWS_SIGN_COMMAND }}"}' > \
               ./tauri.windows.conf.json
 
       - name: build the app
