@@ -28,8 +28,7 @@
 			"entitlements": "entitlements.plist"
 		},
 		"windows": {
-			"signCommand": "relic sign --file %1 --key azure --config relic.conf"
-		},	  
+		},
 		"createUpdaterArtifacts": true
 	},
 	"plugins": {
