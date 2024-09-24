@@ -226,9 +226,9 @@ jobs:
         with:
           go-version: "stable"
           
-      - name: Install AzureSignTool
+      - name: Install relic
         run: |
-          dotnet tool install --global --version 4.0.1 AzureSignTool
+          go install github.com/sassoftware/relic/v8@latest
 
       - name: Install and prepare
         run: |
@@ -244,22 +244,14 @@ jobs:
           fileName: '*'
           out-file-path: 'workdir/'
 
-      - name: Azure code-signing setup (windows only)
-        shell: bash
-        env:
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          WINDOWS_SIGN_COMMAND: AzureSignTool sign -kvu https://darksoil-studio.vault.azure.net -kvi ${{ secrets.AZURE_CLIENT_ID }} -kvt ${{ secrets.AZURE_TENANT_ID }} -kvs ${{ secrets.AZURE_CLIENT_SECRET }} -kvc darksoil-studio -tr http://timestamp.digicert.com -v %1
-        run: |
-          cd "$GITHUB_WORKSPACE/src-tauri"
-          echo "{}" | \
-            jq '.bundle .windows += {"signCommand": "${{ env.WINDOWS_SIGN_COMMAND }}"}' > \
-              ./tauri.windows.conf.json
-
       - name: build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         with:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
           includeUpdaterJson: true
