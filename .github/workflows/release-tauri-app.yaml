@@ -263,4 +263,5 @@ jobs:
         with:
           releaseId: ${{ needs.publish-happ.outputs.releaseId }}
           includeUpdaterJson: true
+          updaterJsonPreferNsis: true
           args: "-vv"
