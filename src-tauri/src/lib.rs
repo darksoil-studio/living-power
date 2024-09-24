@@ -3,7 +3,6 @@ use std::{collections::HashMap, time::Duration};
 
 use anyhow::anyhow;
 use serialport::available_ports;
-use tauri::utils::platform::current_exe;
 use tauri::AppHandle;
 
 use holochain_client::{AppStatusFilter, ZomeCallTarget};
@@ -15,8 +14,8 @@ use tauri_plugin_log::Target;
 
 mod arduino;
 mod collect_measurements;
-mod sdcards;
 mod macos;
+mod sdcards;
 
 // const PRODUCTION_SIGNAL_URL: &'static str = "wss://signal.holo.host";
 // const PRODUCTION_BOOTSTRAP_URL: &'static str = "https://bootstrap.holo.host";
@@ -71,6 +70,7 @@ pub fn run() {
                     .main_window_builder(String::from("main"), false, Some(app_id()), None)
                     .await?
                     .title(String::from("Living Power"))
+                    .inner_size(1400.0, 1000.0)
                     .build()?;
 
                 // Keep sending data to the arduinos so that they know they are still
