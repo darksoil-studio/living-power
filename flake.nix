@@ -42,6 +42,75 @@
             [ inputs'.scaffolding.packages.hc-scaffold-app-template pkgs.udev ];
         };
 
+        checks.tryorama = let
+          filterPnpmSources = { lib }:
+            orig_path: type:
+            let
+              path = (toString orig_path);
+              base = baseNameOf path;
+
+              matchesSuffix = lib.any (suffix: lib.hasSuffix suffix base) [
+                ".ts"
+                ".js"
+                ".json"
+                ".yaml"
+              ];
+            in type == "directory" || matchesSuffix;
+          cleanPnpmDepsSource = { lib }:
+            src:
+            lib.cleanSourceWith {
+              src = lib.cleanSource src;
+              filter = filterPnpmSources { inherit lib; };
+
+              name = "pnpm-workspace";
+            };
+          pnpmTryorama = { src, happ, depsHash, testsWorkspace ? "tests" }:
+            let
+              cleanedSrc = (cleanPnpmDepsSource { inherit lib; }) src;
+              packageJson = builtins.fromJSON
+                (builtins.readFile "${cleanedSrc}/package.json");
+              pname = "${packageJson.name}-tests";
+              version = if builtins.hasAttr "version" packageJson then
+                packageJson.version
+              else
+                "";
+              srcWithDeps = pkgs.stdenv.mkDerivation (finalAttrs: {
+                inherit version;
+                src = cleanedSrc;
+                pname = "${pname}-deps";
+
+                nativeBuildInputs = with pkgs; [ nodejs pnpm.configHook ];
+                pnpmDeps = pkgs.pnpm.fetchDeps {
+                  inherit (finalAttrs) version pname src;
+                  hash = depsHash;
+                };
+                prePnpmInstall = ''
+                  pnpm install --force \
+                  --ignore-scripts \
+                  --frozen-lockfile
+                '';
+                buildPhase = ''
+                  runHook preBuild
+                  mkdir $out
+                  cp -R --no-preserve=all ./* $out
+                  runHook postBuild
+                '';
+              });
+            in pkgs.runCommandNoCC "${pname}-test" {
+              buildInputs =
+                [ inputs'.holonix.packages.holochain pkgs.nodejs pkgs.pnpm ];
+            } ''
+              cp -R --no-preserve=all ${srcWithDeps}/* .
+              export HAPP_PATH=${happ}
+              pnpm -F ${testsWorkspace} test -- all
+              echo "Tests succeeded!" > $out
+            '';
+        in pnpmTryorama {
+          src = ./.;
+          happ = self'.packages.living_power_happ.meta.debug;
+          depsHash = "sha256-axpiKOUUJczbmm/20JFakj+ym+SSSj63HLuRigxOkwk=";
+        };
+
         packages = let
           craneLib = (inputs.crane.mkLib pkgs).overrideToolchain
             inputs'.holonix.packages.rust;
@@ -59,7 +128,6 @@
             nativeBuildInputs = with pkgs; [ nodejs pnpm.configHook ];
             pnpmDeps = pkgs.pnpm.fetchDeps {
               inherit (finalAttrs) pnpmWorkspace version pname src;
-
               hash = "sha256-09peVeaAiu42Sp37BcjNeLXsF/EPHErlRJFfFKKyYPg=";
             };
             buildPhase = ''

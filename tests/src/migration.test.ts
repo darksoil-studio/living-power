@@ -16,10 +16,12 @@ import { sampleMeasurementCollection } from '../../ui/src/living_power/living_po
 import { appPath, oldAppPath } from './app-path.js';
 import { setup } from './living_power/living_power/setup.js';
 
+// const oldAppPath = appPath;
+
 test('migrate from the previous happ to the new version, assert that the data is maintainted', async () => {
 	await runScenario(async scenario => {
 		const { alice, bob } = await setup(scenario, oldAppPath);
-
+		// process.exit(1);
 		// Bob gets all bpv devices
 		let collectionOutput = await toPromise(bob.store.allBpvDevices);
 		assert.equal(collectionOutput.size, 0);
