@@ -8,8 +8,7 @@
       (builtins.attrNames (builtins.readDir ./zomes/integrity)));
 
   perSystem = { inputs', self', lib, system, ... }: {
-    packages.living_power_dna = inputs.hc-infra.outputs.lib.dna {
-      inherit system;
+    packages.living_power_dna = inputs.hc-infra.outputs.builders.${system}.dna {
       dnaManifest = ./workdir/dna.yaml;
       zomes = {
         # profiles_integrity = inputs'.profiles.packages.profiles_integrity;

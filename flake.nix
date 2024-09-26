@@ -44,7 +44,7 @@
 
         packages = let
           craneLib = (inputs.crane.mkLib pkgs).overrideToolchain
-            inputs.holonix.outputs.packages.${system}.rust;
+            inputs'.holonix.packages.rust;
           pname = "living-power";
           version = "0.0.1";
           src =
@@ -82,15 +82,10 @@
             cargoExtraArgs = "";
 
             buildInputs = [ pkgs.udev ]
-              ++ inputs.hc-infra.outputs.lib.holochainDeps { inherit pkgs lib; }
-              ++ inputs.p2p-shipyard.outputs.lib.tauriAppDeps.buildInputs {
-                inherit pkgs lib;
-              };
+              ++ inputs.p2p-shipyard.outputs.dependencies.${system}.tauriHapp.buildInputs;
 
             nativeBuildInputs =
-              inputs.p2p-shipyard.outputs.lib.tauriAppDeps.nativeBuildInputs {
-                inherit pkgs lib;
-              };
+              inputs.p2p-shipyard.outputs.dependencies.${system}.tauriHapp.nativeBuildInputs;
 
             postPatch = ''
               mkdir -p "$TMPDIR/nix-vendor"
@@ -98,7 +93,6 @@
               sed -i "s|$cargoVendorDir|$TMPDIR/nix-vendor/|g" "$TMPDIR/nix-vendor/config.toml"
               chmod -R +w "$TMPDIR/nix-vendor"
               cargoVendorDir="$TMPDIR/nix-vendor"
-
             '';
           };
           cargoArtifacts = craneLib.buildDepsOnly commonArgs;
