@@ -108,7 +108,16 @@
           });
         in {
           inherit ui;
-          living-power = tauriApp;
+          living-power = pkgs.runCommandNoCC "living-power" {
+            buildInputs = [ pkgs.makeWrapper ];
+          } ''
+            mkdir $out
+            mkdir $out/bin
+            # Because we create this ourself, by creating a wrapper
+            makeWrapper ${tauriApp}/bin/living-power $out/bin/living-power \
+              --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+          '';
+
         };
 
       };
