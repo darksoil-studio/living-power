@@ -131,11 +131,13 @@
             tauriApp = craneLib.buildPackage (commonArgs // {
               #inherit cargoArtifacts;
               cargoBuildCommand = ''
-                substituteInPlace src-tauri/tauri.conf.json \
-                  --replace-fail '"frontendDist": "../ui/dist"' '"frontendDist": "${ui}/dist"' \
-                  --replace-fail '"beforeBuildCommand": "pnpm -F ui build",' '"beforeBuildCommand": "",'
-                cp ${self'.packages.living_power_happ} workdir/living-power.happ
-                cp ${self'.packages.living_power_dna.hash} workdir/living_power_dna-hash
+                if [ -f "src-tauri/tauri.conf.json" ]; then
+                  substituteInPlace src-tauri/tauri.conf.json \
+                    --replace-fail '"frontendDist": "../ui/dist"' '"frontendDist": "${ui}/dist"' \
+                    --replace-fail '"beforeBuildCommand": "pnpm -F ui build",' '"beforeBuildCommand": "",'
+                  cp ${self'.packages.living_power_happ} workdir/living-power.happ
+                  cp ${self'.packages.living_power_dna.hash} workdir/living_power_dna-hash
+                fi
                 ${commonArgs.cargoBuildCommand}'';
             });
           in {
