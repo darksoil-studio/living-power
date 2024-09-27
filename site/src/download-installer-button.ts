@@ -1,9 +1,11 @@
 import { wrapPathInSvg } from '@holochain-open-dev/elements';
 import { mdiDownload } from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/copy-button/copy-button.js';
 import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import { LitElement, css, html } from 'lit';
@@ -42,6 +44,9 @@ export class DownloadInstallerButton extends LitElement {
 	@property({ attribute: 'linux-url' })
 	linuxUrl: string | undefined;
 
+	@property({ attribute: 'nixos-command' })
+	nixosCommand: string | undefined;
+
 	@property({ attribute: 'mac-intel-url' })
 	macIntelUrl: string | undefined;
 
@@ -66,44 +71,62 @@ export class DownloadInstallerButton extends LitElement {
 
 	render() {
 		const browser = browserType();
-		return html`<div style="display:flex; flex-direction:row;">
-			<sl-button
-				href="${this.getUrlFor(browser)}"
-				variant="primary"
-				size="large"
-				class="no-border-radius-right"
-				style="width: 20em"
-			>
-				<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDownload)}></sl-icon>
-				Download installer for ${browser}</sl-button
-			>
-			<sl-dropdown
-				><sl-button
-					slot="trigger"
-					caret
+		return html`<div
+			style="display:flex; flex-direction: column; gap: 24px; width: 24em"
+		>
+			<div style="display:flex; flex-direction: row;">
+				<sl-button
+					href="${this.getUrlFor(browser)}"
 					variant="primary"
 					size="large"
-					class="no-border-radius-left"
+					class="no-border-radius-right"
+					style="flex: 1"
 				>
-				</sl-button>
-				<sl-menu>
-					${allBrowsersTypes
-						.filter(b => b !== browser)
-						.map(
-							browser => html`
-								<sl-menu-item
-									@click=${() => download(this.getUrlFor(browser)!)}
-								>
-									<sl-icon
-										slot="prefix"
-										.src=${wrapPathInSvg(mdiDownload)}
-									></sl-icon>
-									${browser}</sl-menu-item
-								>
-							`,
-						)}
-				</sl-menu>
-			</sl-dropdown>
+					<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDownload)}></sl-icon>
+					Download installer for ${browser}</sl-button
+				>
+				<sl-dropdown
+					><sl-button
+						slot="trigger"
+						caret
+						variant="primary"
+						size="large"
+						class="no-border-radius-left"
+					>
+					</sl-button>
+					<sl-menu>
+						${allBrowsersTypes
+							.filter(b => b !== browser)
+							.map(
+								browser => html`
+									<sl-menu-item
+										@click=${() => download(this.getUrlFor(browser)!)}
+									>
+										<sl-icon
+											slot="prefix"
+											.src=${wrapPathInSvg(mdiDownload)}
+										></sl-icon>
+										${browser}</sl-menu-item
+									>
+								`,
+							)}
+					</sl-menu>
+				</sl-dropdown>
+			</div>
+
+			${this.nixosCommand && browser === 'Linux'
+				? html`
+						<span style="align-self: center"
+							>Or, if you have nix installed:</span
+						>
+						<sl-input .value=${this.nixosCommand} style="flex: 1">
+							<sl-copy-button
+								slot="suffix"
+								.value=${this.nixosCommand}
+							></sl-copy-button>
+						</sl-input>
+					`
+				: html``}
 		</div>`;
 	}
 
@@ -115,6 +138,9 @@ export class DownloadInstallerButton extends LitElement {
 		sl-button.no-border-radius-left::part(base) {
 			border-top-left-radius: 0;
 			border-bottom-left-radius: 0;
+		}
+		sl-input::part(input) {
+			pointer-events: none;
 		}
 	`;
 }
