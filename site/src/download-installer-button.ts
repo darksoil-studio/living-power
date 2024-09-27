@@ -44,8 +44,8 @@ export class DownloadInstallerButton extends LitElement {
 	@property({ attribute: 'linux-url' })
 	linuxUrl: string | undefined;
 
-	@property({ attribute: 'nixos-command' })
-	nixosCommand: string | undefined;
+	@property({ attribute: 'nix-command' })
+	nixCommand: string | undefined;
 
 	@property({ attribute: 'mac-intel-url' })
 	macIntelUrl: string | undefined;
@@ -114,15 +114,15 @@ export class DownloadInstallerButton extends LitElement {
 				</sl-dropdown>
 			</div>
 
-			${this.nixosCommand && browser === 'Linux'
+			${this.nixCommand && browser === 'Linux'
 				? html`
 						<span style="align-self: center"
 							>Or, if you have nix installed:</span
 						>
-						<sl-input .value=${this.nixosCommand} style="flex: 1">
+						<sl-input .value=${this.nixCommand} style="flex: 1">
 							<sl-copy-button
 								slot="suffix"
-								.value=${this.nixosCommand}
+								.value=${this.nixCommand}
 							></sl-copy-button>
 						</sl-input>
 					`
