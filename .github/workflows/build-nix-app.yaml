@@ -77,7 +77,7 @@ jobs:
         env:
           CACHIX_AUTH_TOKEN: "${{ secrets.DARKSOIL_CACHIX_AUTH_TOKEN }}"
         run: |
-          cachix watch-exec darksoil-studio -- nix build --accept-flake-config --no-update-lock-file .#living-power
+          cachix watch-exec darksoil-studio -- nix build -L --accept-flake-config --no-update-lock-file .#living-power
 
       - name: Pin living-power
         if: github.event_name != 'pull_request'
