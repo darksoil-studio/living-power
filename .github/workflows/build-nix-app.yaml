@@ -41,8 +41,8 @@ jobs:
         env:
           CACHIX_AUTH_TOKEN: "${{ secrets.DARKSOIL_CACHIX_AUTH_TOKEN }}"
         run: |
-          cachix watch-exec darksoil-studio -- nix build -L .#living_power_dna.hash  && nix build -L .#living_power_happ
-          cachix pin darksoil-studio living_power_happ $(nix path-info --json --accept-flake-config --no-warn-dirty .#living_power_happ | jq -r 'keys[0]')
+          cachix watch-exec darksoil-studio -- nix build --accept-flake-config --no-update-lock-file -L .#living_power_dna.hash  && nix build --accept-flake-config --no-update-lock-file -L .#living_power_happ
+          cachix pin darksoil-studio living_power_happ $(nix path-info --json --accept-flake-config --no-update-lock-file --no-warn-dirty .#living_power_happ | jq -r 'keys[0]')
 
   build-and-cache-nix-tauri-app:
     needs: build-and-cache-release-happ
