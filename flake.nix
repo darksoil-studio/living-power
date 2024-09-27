@@ -121,6 +121,11 @@
                 chmod -R +w "$TMPDIR/nix-vendor"
                 cargoVendorDir="$TMPDIR/nix-vendor"
               '';
+              stdenv = if pkgs.stdenv.isDarwin then
+                pkgs.overrideSDK pkgs.stdenv "11.0"
+              else
+                pkgs.stdenv;
+
             };
             cargoArtifacts = craneLib.buildDepsOnly commonArgs;
             tauriApp = craneLib.buildPackage (commonArgs // {
