@@ -127,9 +127,9 @@
                 pkgs.stdenv;
 
             };
-            cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+            #cargoArtifacts = craneLib.buildDepsOnly commonArgs;
             tauriApp = craneLib.buildPackage (commonArgs // {
-              inherit cargoArtifacts;
+              #inherit cargoArtifacts;
               cargoBuildCommand = ''
                 substituteInPlace src-tauri/tauri.conf.json \
                   --replace-fail '"frontendDist": "../ui/dist"' '"frontendDist": "${ui}/dist"' \
