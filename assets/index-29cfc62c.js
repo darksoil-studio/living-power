@@ -2027,14 +2027,14 @@
 				</sl-dropdown>
 			</div>
 
-			${this.nixosCommand&&y==="Linux"?ng`
+			${this.nixCommand&&y==="Linux"?ng`
 						<span style="align-self: center"
 							>Or, if you have nix installed:</span
 						>
-						<sl-input .value=${this.nixosCommand} style="flex: 1">
+						<sl-input .value=${this.nixCommand} style="flex: 1">
 							<sl-copy-button
 								slot="suffix"
-								.value=${this.nixosCommand}
+								.value=${this.nixCommand}
 							></sl-copy-button>
 						</sl-input>
 					`:ng``}
@@ -2050,4 +2050,4 @@
 		sl-input::part(input) {
 			pointer-events: none;
 		}
-	`;gI([g0({attribute:"linux-url"})],j2.prototype,"linuxUrl",2);gI([g0({attribute:"nixos-command"})],j2.prototype,"nixosCommand",2);gI([g0({attribute:"mac-intel-url"})],j2.prototype,"macIntelUrl",2);gI([g0({attribute:"mac-aarch-url"})],j2.prototype,"macAarchUrl",2);gI([g0({attribute:"windows-url"})],j2.prototype,"windowsUrl",2);j2=gI([Rr("download-installer-button")],j2);const dB="modulepreload",uB=function(y){return"/living-power/"+y},io={},qi=function(u,v,P){if(!v||v.length===0)return u();const q=document.getElementsByTagName("link");return Promise.all(v.map(IA=>{if(IA=uB(IA),IA in io)return;io[IA]=!0;const S=IA.endsWith(".css"),UA=S?'[rel="stylesheet"]':"";if(!!P)for(let i0=q.length-1;i0>=0;i0--){const R=q[i0];if(R.href===IA&&(!S||R.rel==="stylesheet"))return}else if(document.querySelector(`link[href="${IA}"]${UA}`))return;const jA=document.createElement("link");if(jA.rel=S?"stylesheet":dB,S||(jA.as="script",jA.crossOrigin=""),jA.href=IA,document.head.appendChild(jA),S)return new Promise((i0,R)=>{jA.addEventListener("load",i0),jA.addEventListener("error",()=>R(new Error(`Unable to preload CSS for ${IA}`)))})})).then(()=>u()).catch(IA=>{const S=new Event("vite:preloadError",{cancelable:!0});if(S.payload=IA,window.dispatchEvent(S),!S.defaultPrevented)throw IA})};async function _B(){customElements.define("rocket-content-area",await qi(()=>import("./content-area-368b6216.js"),["assets/content-area-368b6216.js","assets/lit-element-e618a7a4.js"]).then(y=>y.RocketContentArea)),customElements.define("rocket-header-scroll-menu",await qi(()=>import("./header-scroll-menu-480b608e.js"),["assets/header-scroll-menu-480b608e.js","assets/lit-element-e618a7a4.js","assets/content-area-368b6216.js"]).then(y=>y.RocketHeaderScrollMenu)),customElements.define("rocket-card",await qi(()=>import("./card-3478fc1e.js"),["assets/card-3478fc1e.js","assets/lit-element-e618a7a4.js"]).then(y=>y.RocketCard)),customElements.define("rocket-columns",await qi(()=>import("./columns-59a19001.js"),["assets/columns-59a19001.js","assets/lit-element-e618a7a4.js"]).then(y=>y.RocketColumns))}_B();
+	`;gI([g0({attribute:"linux-url"})],j2.prototype,"linuxUrl",2);gI([g0({attribute:"nix-command"})],j2.prototype,"nixCommand",2);gI([g0({attribute:"mac-intel-url"})],j2.prototype,"macIntelUrl",2);gI([g0({attribute:"mac-aarch-url"})],j2.prototype,"macAarchUrl",2);gI([g0({attribute:"windows-url"})],j2.prototype,"windowsUrl",2);j2=gI([Rr("download-installer-button")],j2);const dB="modulepreload",uB=function(y){return"/living-power/"+y},io={},qi=function(u,v,P){if(!v||v.length===0)return u();const q=document.getElementsByTagName("link");return Promise.all(v.map(IA=>{if(IA=uB(IA),IA in io)return;io[IA]=!0;const S=IA.endsWith(".css"),UA=S?'[rel="stylesheet"]':"";if(!!P)for(let i0=q.length-1;i0>=0;i0--){const R=q[i0];if(R.href===IA&&(!S||R.rel==="stylesheet"))return}else if(document.querySelector(`link[href="${IA}"]${UA}`))return;const jA=document.createElement("link");if(jA.rel=S?"stylesheet":dB,S||(jA.as="script",jA.crossOrigin=""),jA.href=IA,document.head.appendChild(jA),S)return new Promise((i0,R)=>{jA.addEventListener("load",i0),jA.addEventListener("error",()=>R(new Error(`Unable to preload CSS for ${IA}`)))})})).then(()=>u()).catch(IA=>{const S=new Event("vite:preloadError",{cancelable:!0});if(S.payload=IA,window.dispatchEvent(S),!S.defaultPrevented)throw IA})};async function _B(){customElements.define("rocket-content-area",await qi(()=>import("./content-area-368b6216.js"),["assets/content-area-368b6216.js","assets/lit-element-e618a7a4.js"]).then(y=>y.RocketContentArea)),customElements.define("rocket-header-scroll-menu",await qi(()=>import("./header-scroll-menu-480b608e.js"),["assets/header-scroll-menu-480b608e.js","assets/lit-element-e618a7a4.js","assets/content-area-368b6216.js"]).then(y=>y.RocketHeaderScrollMenu)),customElements.define("rocket-card",await qi(()=>import("./card-3478fc1e.js"),["assets/card-3478fc1e.js","assets/lit-element-e618a7a4.js"]).then(y=>y.RocketCard)),customElements.define("rocket-columns",await qi(()=>import("./columns-59a19001.js"),["assets/columns-59a19001.js","assets/lit-element-e618a7a4.js"]).then(y=>y.RocketColumns))}_B();
