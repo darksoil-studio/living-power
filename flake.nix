@@ -47,10 +47,11 @@
               inputs'.hc-infra.devShells.synchronized-pnpm
               inputs'.holonix.devShells.default
             ];
-            packages = [
-              inputs'.scaffolding.packages.hc-scaffold-app-template
-              pkgs.udev
-            ];
+            packages = [ inputs'.scaffolding.packages.hc-scaffold-app-template ]
+              ++ (lib.optionals pkgs.stdenv.isLinux [
+                pkgs.arduino-ide
+                pkgs.udev
+              ]);
           };
 
           packages = let
@@ -93,8 +94,9 @@
               cargoCheckCommand = "";
               cargoExtraArgs = "";
 
-              buildInputs = [ pkgs.udev ]
-                ++ inputs.p2p-shipyard.outputs.dependencies.${system}.tauriHapp.buildInputs;
+              buildInputs =
+                inputs.p2p-shipyard.outputs.dependencies.${system}.tauriHapp.buildInputs
+                ++ (lib.optionals pkgs.stdenv.isLinux [ pkgs.udev ]);
 
               nativeBuildInputs =
                 inputs.p2p-shipyard.outputs.dependencies.${system}.tauriHapp.nativeBuildInputs;
