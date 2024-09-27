@@ -72,7 +72,7 @@ export class DownloadInstallerButton extends LitElement {
 	render() {
 		const browser = browserType();
 		return html`<div
-			style="display:flex; flex-direction: column; gap: 24px; width: 24em"
+			style="display:flex; flex-direction: column; gap: 24px; min-width: 12em"
 		>
 			<div style="display:flex; flex-direction: row;">
 				<sl-button

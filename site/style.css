@@ -100,7 +100,7 @@ body {
 	transform: translateZ(0);
 }
 .parallax__layer--back {
-	transform: translateZ(-9px) scale(11);
+	/* transform: translateZ(-9px) scale(11); */
 	height: 100vh;
 }
 .darksoil-background {
@@ -144,7 +144,7 @@ rocket-content-area {
 rocket-card {
 	border: none;
 	background-color: rgba(150, 150, 150, 0.2);
-	min-width: 300px;
+	min-width: 100px;
 	max-width: 500px;
 	border-radius: 16px;
 	padding: 3rem 3rem;
@@ -232,6 +232,12 @@ rocket-header-scroll-menu a:nth-child(2) {
 	}
 }
 
+@media screen and (max-width: 600px) {
+	rocket-card {
+		margin-bottom: 2rem;
+	}
+}
+
 @media screen and (max-width: 1481px) {
 	rocket-header-scroll-menu a {
 		display: none !important;
@@ -241,25 +247,6 @@ rocket-header-scroll-menu a:nth-child(2) {
 		margin-top: -13px;
 	}
 }
-@media screen and (max-width: 599px) {
-	rocket-header-scroll-menu {
-		top: -18px;
-	}
-	.custom-social-links {
-		left: -44px;
-	}
-	.parallax__layer--base {
-		margin-top: 300px;
-	}
-	rocket-content-area {
-		padding: 20px;
-	}
-	rocket-card {
-		padding: 1rem;
-		min-width: 250px;
-	}
-}
-
 a.cta {
 	display: inline-block;
 	padding: 1.625rem 2.625rem 1.625rem 2.625rem;
