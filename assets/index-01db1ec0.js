@@ -1989,7 +1989,7 @@
         @mousedown=${this.handleMouseDown}
       ></slot>
     `}};eC.styles=[a2,lB];xA([Dg("slot")],eC.prototype,"defaultSlot",2);eC.define("sl-menu");var yB=Object.defineProperty,pB=Object.getOwnPropertyDescriptor,gI=(y,u,v,P)=>{for(var q=P>1?void 0:P?pB(u,v):u,IA=y.length-1,S;IA>=0;IA--)(S=y[IA])&&(q=(P?S(u,v,q):S(q))||q);return P&&q&&yB(u,v,q),q};const fB=["Windows","MacOS Intel","MacOS Silicon","Linux"];function wB(){const y=navigator.userAgent.toLowerCase();return y.includes("windows")?"Windows":y.includes("mac")?y.includes("intel")?"MacOS Intel":"MacOS Silicon":"Linux"}function DB(y){const u=document.createElement("a");u.href=y,u.download=y.split("/").pop(),document.body.appendChild(u),u.click(),document.body.removeChild(u)}let j2=class extends Pt{getUrlFor(y){switch(y){case"Windows":return this.windowsUrl;case"MacOS Intel":return this.macIntelUrl;case"MacOS Silicon":return this.macAarchUrl;case"Linux":return this.linuxUrl}}render(){const y=wB();return ng`<div
-			style="display:flex; flex-direction: column; gap: 24px; width: 24em"
+			style="display:flex; flex-direction: column; gap: 24px; min-width: 12em"
 		>
 			<div style="display:flex; flex-direction: row;">
 				<sl-button
