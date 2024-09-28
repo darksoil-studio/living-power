@@ -6,7 +6,9 @@
 
     p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard/next";
 
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.follows = "hc-infra/nixpkgs";    
+    pnpmnixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+
     flake-parts.follows = "holonix/flake-parts";
     crane.follows = "holonix/crane";
 
@@ -82,8 +84,8 @@
                 inherit lib;
               }) ./.;
 
-              nativeBuildInputs = with pkgs; [ nodejs pnpm.configHook ];
-              pnpmDeps = pkgs.pnpm.fetchDeps {
+              nativeBuildInputs = with inputs'.pnpmnixpkgs.legacyPackages; [ nodejs pnpm.configHook ];
+              pnpmDeps = inputs'.pnpmnixpkgs.legacyPackages.pnpm.fetchDeps {
                 inherit (finalAttrs) pnpmWorkspace version pname src;
 
                 hash = "sha256-1n3sefKemRPF1y2qqRrChQSsneqtqV72po8xhqZXMzc=";
@@ -130,6 +132,7 @@
             #cargoArtifacts = craneLib.buildDepsOnly commonArgs;
             tauriApp = craneLib.buildPackage (commonArgs // {
               #inherit cargoArtifacts;
+
               cargoBuildCommand = ''
                 if [ -f "src-tauri/tauri.conf.json" ]; then
                   substituteInPlace src-tauri/tauri.conf.json \
@@ -144,7 +147,6 @@
             inherit ui;
             living-power = pkgs.runCommandNoCC "living-power" {
               buildInputs = [ pkgs.makeWrapper ];
-              __ignoreNulls = true;
 
             } ''
               mkdir $out
