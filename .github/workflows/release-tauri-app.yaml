@@ -89,7 +89,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           override: true
-          toolchain: 1.77.2
+          toolchain: 1.80.1
 
       - name: install Go stable
         uses: actions/setup-go@v4
@@ -139,7 +139,7 @@ jobs:
     permissions: write-all
     needs: publish-happ
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -160,7 +160,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           override: true
-          toolchain: 1.77.2
+          toolchain: 1.80.1
 
       - name: install Go stable
         uses: actions/setup-go@v4
@@ -220,7 +220,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           override: true
-          toolchain: 1.77.2
+          toolchain: 1.80.1
 
       - name: install Go stable
         uses: actions/setup-go@v4
