@@ -21,7 +21,7 @@ fn internal_list_measurements_sdcards() -> anyhow::Result<BTreeMap<String, PathB
     let mut sdcards: BTreeMap<String, PathBuf> = BTreeMap::new();
 
     for sdcard in measurements_sdcards {
-        let serial_number = read_to_string(sdcard.join("serial"))?;
+        let serial_number = read_to_string(sdcard.join("serial"))?.trim().to_string();
         sdcards.insert(serial_number, sdcard);
     }
 

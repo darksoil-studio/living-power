@@ -1,6 +1,6 @@
 [package]
 name = "living-power"
-version = "0.0.7"
+version = "0.0.8"
 description = "Living Power"
 authors = ["you"]
 license = ""

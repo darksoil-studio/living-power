@@ -5,23 +5,13 @@ import { Router, Routes, wrapPathInSvg } from '@holochain-open-dev/elements';
 // } from '@holochain-open-dev/profiles';
 // import '@holochain-open-dev/profiles/dist/elements/agent-avatar.js';
 // import '@holochain-open-dev/profiles/dist/elements/profile-list-item-skeleton.js';
-import {
-	AsyncResult,
-	SignalWatcher,
-	joinAsyncMap,
-	toPromise,
-} from '@holochain-open-dev/signals';
-import { EntryRecord, mapValues } from '@holochain-open-dev/utils';
-import {
-	ActionHash,
-	decodeHashFromBase64,
-	encodeHashToBase64,
-} from '@holochain/client';
+import { SignalWatcher, toPromise } from '@holochain-open-dev/signals';
 import { consume } from '@lit/context';
 import { msg } from '@lit/localize';
 import { mdiDeveloperBoard, mdiInformationOutline } from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/option/option.js';
 import '@shoelace-style/shoelace/dist/components/select/select.js';
+import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
 import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import { LitElement, css, html } from 'lit';
@@ -184,8 +174,14 @@ export class HomePage extends SignalWatcher(LitElement) {
 		if (allBpvDevicesLatest.value.size === 0)
 			return html`<span class="title">${msg('Living Power')}</span>`;
 
+		const pathname = this.routes.currentPathname();
+		const selectedSerialNumber = pathname.split('bpv-devices/')[1];
+
 		return html`<sl-select
-			.value=${Array.from(allBpvDevicesLatest.value.keys())[0]}
+			.value=${selectedSerialNumber}
+			@sl-change=${(e: CustomEvent) => {
+				this.routes.goto(`bpv-devices/${(e.target as SlSelect).value}`);
+			}}
 		>
 			<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDeveloperBoard)}></sl-icon>
 

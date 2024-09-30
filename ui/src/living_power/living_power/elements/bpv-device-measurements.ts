@@ -21,13 +21,17 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
 import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import '@shoelace-style/shoelace/dist/components/tab/tab.js';
-import Chart, { ChartConfiguration, ChartData } from 'chart.js/auto';
-import 'chartjs-adapter-luxon';
+import type {
+	ChartConfiguration,
+	ChartData,
+	ChartOptions,
+} from 'chart.js/auto';
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ref } from 'lit/directives/ref.js';
 
 import { appStyles } from '../../../app-styles.js';
+import '../../../chartjs-chart.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
 import { Measurement, MeasurementCollection } from '../types.js';
@@ -175,70 +179,60 @@ export function chartData(
 	};
 }
 
-export function chartConfig(
-	measurementCollections: Array<MeasurementCollection>,
-	timeFilter: TimeFilter,
-): ChartConfiguration<'line'> {
-	return {
-		type: 'line',
-		data: chartData(measurementCollections, timeFilter),
-		options: {
-			scales: {
-				x: {
-					type: 'time',
-					time: {
-						// Luxon format string
-						// unit: 'second',
-						displayFormats: {
-							millisecond: 'HH:MM',
-						},
-					},
-					title: {
-						display: true,
-						text: 'Date',
-					},
-				},
-				voltage: {},
-				intensity: {
-					display: false,
-				},
-				power: {
-					display: false,
-				},
-				temperature: {
-					display: false,
-					// title: {
-					// 	display: true,
-					// 	text: 'ºC',
-					// },
-					position: 'right',
-				},
-				lightlevel: {
-					display: false,
-					// title: {
-					// 	display: true,
-					// 	text: 'ºC',
-					// },
-					position: 'right',
-				},
-				humidity: {
-					display: false,
-					// title: {
-					// 	display: true,
-					// 	text: msg("Humidity"),
-					// },
-					position: 'right',
-				},
-				resistor: {
-					// type: '',
-					display: true,
-					position: 'right',
+export const chartOptions: ChartOptions<'line'> = {
+	scales: {
+		x: {
+			type: 'time',
+			time: {
+				// Luxon format string
+				// unit: 'second',
+				displayFormats: {
+					millisecond: 'HH:MM',
 				},
 			},
-			responsive: false,
+			title: {
+				display: true,
+				text: 'Date',
+			},
 		},
-	};
-}
+		voltage: {},
+		intensity: {
+			display: false,
+		},
+		power: {
+			display: false,
+		},
+		temperature: {
+			display: false,
+			// title: {
+			// 	display: true,
+			// 	text: 'ºC',
+			// },
+			position: 'right',
+		},
+		lightlevel: {
+			display: false,
+			// title: {
+			// 	display: true,
+			// 	text: 'ºC',
+			// },
+			position: 'right',
+		},
+		humidity: {
+			display: false,
+			// title: {
+			// 	display: true,
+			// 	text: msg("Humidity"),
+			// },
+			position: 'right',
+		},
+		resistor: {
+			// type: '',
+			display: true,
+			position: 'right',
+		},
+	},
+};
 
 export function intensityVoltageChartData(
 	measurementCollections: Array<MeasurementCollection>,
@@ -264,39 +258,29 @@ export function intensityVoltageChartData(
 	};
 }
 
-export function intensityVoltageChartConfig(
-	measurementCollections: Array<MeasurementCollection>,
-	timeFilter: TimeFilter,
-): ChartConfiguration<'scatter'> {
-	return {
-		type: 'scatter',
-		data: intensityVoltageChartData(measurementCollections, timeFilter),
-		options: {
-			plugins: {
-				legend: {
-					display: false,
-				},
-			},
-
-			scales: {
-				x: {
-					type: 'linear',
-					title: {
-						display: true,
-						text: 'Intensity (uA)',
-					},
-				},
-				y: {
-					title: {
-						display: true,
-						text: 'Voltage (mV)',
-					},
-				},
-			},
-			responsive: false,
+export const intensityVoltageChartOptions: ChartOptions<'scatter'> = {
+	plugins: {
+		legend: {
+			display: false,
 		},
-	};
-}
+	},
+
+	scales: {
+		x: {
+			type: 'linear',
+			title: {
+				display: true,
+				text: 'Intensity (uA)',
+			},
+		},
+		y: {
+			title: {
+				display: true,
+				text: 'Voltage (mV)',
+			},
+		},
+	},
+};
 
 type TimeFilter = 'last_day' | 'last_week' | 'last_month' | 'all_time';
 
@@ -321,38 +305,18 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 	@state()
 	timeFilter: TimeFilter = 'last_week';
 
-	chart: Chart | undefined;
-
 	renderTimeChart(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
 	) {
 		return html`
 			<div class="tab-content">
-				<canvas
-					${ref(el => {
-						if (!el) return;
-						if (!this.chart) {
-							this.chart = new Chart(
-								(el as HTMLCanvasElement).getContext('2d')!,
-								chartConfig(
-									measurementsCollections.map(r => r.entry),
-									this.timeFilter,
-								),
-							);
-							setTimeout(() => this.chart!.resize(), 1);
-							setTimeout(() => this.chart!.resize(), 100);
-							setTimeout(() => this.chart!.resize(), 300);
-							setTimeout(() => this.chart!.resize(), 500);
-						} else {
-							const data = chartData(
-								measurementsCollections.map(r => r.entry),
-								this.timeFilter,
-							);
-							this.chart.data = data;
-							this.chart.update();
-						}
-					})}
-				></canvas>
+				<line-chart
+					.options=${chartOptions}
+					.data=${chartData(
+						measurementsCollections.map(r => r.entry),
+						this.timeFilter,
+					)}
+				></line-chart>
 			</div>
 		`;
 	}
@@ -362,28 +326,13 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 	) {
 		return html`
 			<div class="tab-content">
-				<canvas
-					${ref(el => {
-						if (!el) return;
-						if (!this.chart) {
-							this.chart = new Chart(
-								(el as HTMLCanvasElement).getContext('2d')!,
-								intensityVoltageChartConfig(
-									measurementsCollections.map(r => r.entry),
-									this.timeFilter,
-								),
-							);
-							setTimeout(() => this.chart!.resize(), 1);
-						} else {
-							const data = intensityVoltageChartData(
-								measurementsCollections.map(r => r.entry),
-								this.timeFilter,
-							);
-							this.chart.data = data;
-							this.chart.update();
-						}
-					})}
-				></canvas>
+				<scatter-chart
+					.options=${intensityVoltageChartOptions}
+					.data=${intensityVoltageChartData(
+						measurementsCollections.map(r => r.entry),
+						this.timeFilter,
+					)}
+				></scatter-chart>
 			</div>
 		`;
 	}
@@ -439,14 +388,19 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 								<sl-tab-group
 									style="flex: 1"
 									@sl-tab-show=${(e: CustomEvent) => {
-										this.chart = undefined;
 										this.selectedTab = e.detail.name;
 									}}
 								>
-									<sl-tab slot="nav" panel="time-chart"
+									<sl-tab
+										slot="nav"
+										panel="time-chart"
+										.active=${this.selectedTab === 'time-chart'}
 										>${msg('Time Chart')}</sl-tab
 									>
-									<sl-tab slot="nav" panel="intensity-voltage"
+									<sl-tab
+										slot="nav"
+										panel="intensity-voltage"
+										.active=${this.selectedTab === 'intensity-voltage'}
 										>${msg('Intensity x Voltage')}</sl-tab
 									>
 									<sl-tab-panel active style="padding: 0 16px; display: flex"
