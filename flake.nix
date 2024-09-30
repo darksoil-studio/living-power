@@ -6,7 +6,7 @@
 
     p2p-shipyard.url = "github:darksoil-studio/p2p-shipyard/next";
 
-    nixpkgs.follows = "hc-infra/nixpkgs";    
+    nixpkgs.follows = "hc-infra/nixpkgs";
     pnpmnixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
 
     flake-parts.follows = "holonix/flake-parts";
@@ -84,11 +84,14 @@
                 inherit lib;
               }) ./.;
 
-              nativeBuildInputs = with inputs'.pnpmnixpkgs.legacyPackages; [ nodejs pnpm.configHook ];
+              nativeBuildInputs = with inputs'.pnpmnixpkgs.legacyPackages; [
+                nodejs
+                pnpm.configHook
+              ];
               pnpmDeps = inputs'.pnpmnixpkgs.legacyPackages.pnpm.fetchDeps {
                 inherit (finalAttrs) pnpmWorkspace version pname src;
 
-                hash = "sha256-1n3sefKemRPF1y2qqRrChQSsneqtqV72po8xhqZXMzc=";
+                hash = "sha256-VzR0Wqs5sNZ1Atd0mcb+cdZpLoUo2qo9HK26H+YZAuY=";
               };
               buildPhase = ''
                 runHook preBuild
