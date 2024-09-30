@@ -50,13 +50,13 @@ export function isTimestampInTimeFilter(
 	switch (timeFilter) {
 		case 'last_day':
 			const timestampForOneDayAgo = Date.now() - MILLIS_IN_A_DAY;
-			return timestamp > timestampForOneDayAgo;
+			return timestamp / 1000 > timestampForOneDayAgo;
 		case 'last_week':
 			const timestampForOneWeekAgo = Date.now() - MILLIS_IN_A_WEEK;
-			return timestamp > timestampForOneWeekAgo;
+			return timestamp / 1000 > timestampForOneWeekAgo;
 		case 'last_month':
 			const timestampForOneMonthAgo = Date.now() - MILLIS_IN_A_MONTH;
-			return timestamp > timestampForOneMonthAgo;
+			return timestamp / 1000 > timestampForOneMonthAgo;
 		case 'all_time':
 			return true;
 	}
@@ -340,6 +340,9 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 								),
 							);
 							setTimeout(() => this.chart!.resize(), 1);
+							setTimeout(() => this.chart!.resize(), 100);
+							setTimeout(() => this.chart!.resize(), 300);
+							setTimeout(() => this.chart!.resize(), 500);
 						} else {
 							const data = chartData(
 								measurementsCollections.map(r => r.entry),

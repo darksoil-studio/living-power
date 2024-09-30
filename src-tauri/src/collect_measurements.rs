@@ -34,7 +34,7 @@ fn internal_get_last_measurement(port_name: String) -> anyhow::Result<Option<Mea
     loop {
         let mut read_buffer: Vec<u8> = vec![0; 7];
 
-        let n = port.read(&mut read_buffer)?;
+        let _n = port.read(&mut read_buffer)?;
         let buf = String::from_utf8(read_buffer)?;
         if buf.contains("BEGIN_L") {
             break;
@@ -85,7 +85,7 @@ fn internal_collect_measurements(port_name: String) -> anyhow::Result<Vec<Measur
     loop {
         let mut read_buffer: Vec<u8> = vec![0; 7];
 
-        let n = port.read(&mut read_buffer)?;
+        let _n = port.read(&mut read_buffer)?;
         let buf = String::from_utf8(read_buffer)?;
         if buf.contains("BEGIN_C") {
             break;
@@ -133,7 +133,7 @@ fn line_to_measurement(line: &str) -> anyhow::Result<Measurement> {
         return Err(anyhow!("Invalid measurement line"));
     };
     let date_time: NaiveDateTime = NaiveDate::from_ymd_opt(
-        caps["year"].parse::<i32>()? + 2000,
+        caps["year"].parse::<i32>()?,
         caps["month"].parse()?,
         caps["day"].parse()?,
     )

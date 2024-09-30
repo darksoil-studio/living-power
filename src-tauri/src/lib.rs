@@ -34,13 +34,12 @@ pub fn happ_bundle() -> AppBundle {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    std::env::set_var("WASM_LOG", "info");
+
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Warn)
-                .target(Target::new(tauri_plugin_log::TargetKind::LogDir {
-                    file_name: None,
-                }))
                 .build(),
         )
         .plugin(tauri_plugin_process::init())

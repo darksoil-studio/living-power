@@ -81,6 +81,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			external_resistor_ohms,
 		};
 
+		console.log(measurementCollection);
 		try {
 			this.committing = true;
 			const actionHashes =
