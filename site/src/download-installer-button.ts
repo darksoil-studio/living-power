@@ -47,11 +47,11 @@ export class DownloadInstallerButton extends LitElement {
 	@property({ attribute: 'nix-command' })
 	nixCommand: string | undefined;
 
-	@property({ attribute: 'mac-intel-url' })
-	macIntelUrl: string | undefined;
+	@property({ attribute: 'macos-intel-url' })
+	macosIntelUrl: string | undefined;
 
-	@property({ attribute: 'mac-aarch-url' })
-	macAarchUrl: string | undefined;
+	@property({ attribute: 'macos-silicon-url' })
+	macosSiliconUrl: string | undefined;
 
 	@property({ attribute: 'windows-url' })
 	windowsUrl: string | undefined;
@@ -61,9 +61,9 @@ export class DownloadInstallerButton extends LitElement {
 			case 'Windows':
 				return this.windowsUrl;
 			case 'MacOS Intel':
-				return this.macIntelUrl;
+				return this.macosIntelUrl;
 			case 'MacOS Silicon':
-				return this.macAarchUrl;
+				return this.macosSiliconUrl;
 			case 'Linux':
 				return this.linuxUrl;
 		}
