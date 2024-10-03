@@ -8,7 +8,11 @@ import { Router, Routes, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { SignalWatcher, toPromise } from '@holochain-open-dev/signals';
 import { consume } from '@lit/context';
 import { msg } from '@lit/localize';
-import { mdiDeveloperBoard, mdiInformationOutline } from '@mdi/js';
+import {
+	mdiArrowLeft,
+	mdiDeveloperBoard,
+	mdiInformationOutline,
+} from '@mdi/js';
 import '@shoelace-style/shoelace/dist/components/option/option.js';
 import '@shoelace-style/shoelace/dist/components/select/select.js';
 import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js';
@@ -18,6 +22,7 @@ import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import { appStyles } from './app-styles.js';
+import { connectedArduinos } from './arduinos/connected-arduinos.js';
 import { rootRouterContext } from './context.js';
 import { livingPowerStoreContext } from './living_power/living_power/context.js';
 import './living_power/living_power/elements/bpv-device-detail.js';
@@ -81,6 +86,14 @@ export class HomePage extends SignalWatcher(LitElement) {
 					style="flex: 1"
 					.arduinoSerialNumber=${params.arduinoSerialNumber}
 				></bpv-device-measurements>`,
+		},
+		{
+			path: 'bpv-devices/:arduinoSerialNumber/external-resistors-values',
+			render: params =>
+				html`<external-resistors-values
+					style="flex: 1"
+					.arduinoSerialNumber=${params.arduinoSerialNumber}
+				></external-resistors-values>`,
 		},
 	]);
 
@@ -179,21 +192,48 @@ export class HomePage extends SignalWatcher(LitElement) {
 		const pathname = this.routes.currentPathname();
 		const selectedSerialNumber = pathname.split('bpv-devices/')[1];
 
-		return html`<sl-select
-			.value=${selectedSerialNumber}
-			@sl-change=${(e: CustomEvent) => {
-				this.routes.goto(`bpv-devices/${(e.target as SlSelect).value}`);
-			}}
-		>
-			<sl-icon slot="prefix" .src=${wrapPathInSvg(mdiDeveloperBoard)}></sl-icon>
+		if (pathname.includes('external-resistors-values')) {
+			return html`
+				<div class="row" style="align-items: center">
+					<sl-icon-button
+						.src=${wrapPathInSvg(mdiArrowLeft)}
+						@click=${() =>
+							this.routes.goto(`bpv-devices/${selectedSerialNumber}`)}
+					></sl-icon-button>
+					<span class="title"
+						>${msg(
+							`External Resistors Values for ${allBpvDevicesLatest.value.get(selectedSerialNumber)!.name}`,
+						)}
+					</span>
+				</div>
+			`;
+		}
 
-			${Array.from(allBpvDevicesLatest.value.entries()).map(
-				([arduinoSerialNumber, info]) =>
-					html`<sl-option value="${arduinoSerialNumber}"
-						>${info?.name}</sl-option
-					>`,
-			)}
-		</sl-select>`;
+		return html`<div class="row" style="align-items: center">
+			<sl-select
+				.value=${selectedSerialNumber}
+				@sl-change=${(e: CustomEvent) => {
+					this.routes.goto(`bpv-devices/${(e.target as SlSelect).value}`);
+				}}
+			>
+				<sl-icon
+					slot="prefix"
+					.src=${wrapPathInSvg(mdiDeveloperBoard)}
+				></sl-icon>
+
+				${Array.from(allBpvDevicesLatest.value.entries()).map(
+					([arduinoSerialNumber, info]) =>
+						html`<sl-option value="${arduinoSerialNumber}"
+							>${info?.name}</sl-option
+						>`,
+				)}
+			</sl-select>
+			<div style="flex: 1"></div>
+
+			<sl-button @click=${() => {}}
+				>${msg('External Resistors Values')}</sl-button
+			>
+		</div>`;
 	}
 
 	render() {

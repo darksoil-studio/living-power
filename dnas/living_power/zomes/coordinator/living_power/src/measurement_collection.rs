@@ -18,7 +18,6 @@ pub fn create_measurement_collections(
     for chunk in chunks {
         let measurement_collection = MeasurementCollection {
             arduino_serial_number: measurement_collection.arduino_serial_number.clone(),
-            external_resistor_ohms: measurement_collection.external_resistor_ohms,
             measurements: chunk.to_vec(),
         };
         let measurement_collection_hash = create_entry(&EntryTypes::MeasurementCollection(

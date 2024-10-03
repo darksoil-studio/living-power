@@ -23,5 +23,10 @@ export interface Measurement {
 export interface MeasurementCollection {
 	arduino_serial_number: string;
 	measurements: Array<Measurement>;
-	external_resistor_ohms: number;
+}
+
+export interface ExternalResistorValue {
+	external_resistor_value_ohms: number;
+	from: number;
+	to: number;
 }

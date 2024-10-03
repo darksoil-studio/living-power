@@ -58,7 +58,25 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 	) {
 		this.collecting = true;
 		try {
-			this.measurements = await collectMeasurements(serialPortInfo.port_name);
+			const measurements = await collectMeasurements(serialPortInfo.port_name);
+			const measurementCollection: MeasurementCollection = {
+				arduino_serial_number: arduinoSerialNumber,
+				measurements: measurements!,
+			};
+			const actionHashes =
+				await this._livingPowerStore.client.createMeasurementCollection(
+					measurementCollection,
+				);
+
+			this.dispatchEvent(
+				new CustomEvent('measurement-collections-created', {
+					composed: true,
+					bubbles: true,
+					detail: {
+						measurementCollectionsHashes: actionHashes,
+					},
+				}),
+			);
 			(
 				this.shadowRoot?.getElementById(
 					`save-measurement-dialog-${arduinoSerialNumber}`,
@@ -75,28 +93,8 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		arduinoSerialNumber: string,
 		external_resistor_ohms: number,
 	) {
-		const measurementCollection: MeasurementCollection = {
-			arduino_serial_number: arduinoSerialNumber,
-			measurements: this.measurements!,
-			external_resistor_ohms,
-		};
-
 		try {
 			this.committing = true;
-			const actionHashes =
-				await this._livingPowerStore.client.createMeasurementCollection(
-					measurementCollection,
-				);
-
-			this.dispatchEvent(
-				new CustomEvent('measurement-collections-created', {
-					composed: true,
-					bubbles: true,
-					detail: {
-						measurementCollectionsHashes: actionHashes,
-					},
-				}),
-			);
 			this.measurements = [];
 		} catch (e: unknown) {
 			console.error(e);

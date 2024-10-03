@@ -1,12 +1,15 @@
-pub mod all_bpv_devices;
-pub mod measurement_collection;
-
-pub mod bpv_device;
-use bpv_device::{set_bpv_device_info, BpvDeviceInfo, SetBpvDeviceInfoInput};
 use hdk::prelude::*;
-use living_power_integrity::*;
-use measurement_collection::create_measurement_collections;
 use serde::de::DeserializeOwned;
+
+use living_power_integrity::*;
+
+pub mod all_bpv_devices;
+pub mod bpv_device;
+pub mod external_resistors;
+pub mod measurement_collection;
+use bpv_device::{set_bpv_device_info, BpvDeviceInfo, SetBpvDeviceInfoInput};
+use measurement_collection::create_measurement_collections;
+
 #[hdk_extern]
 pub fn init() -> ExternResult<InitCallbackResult> {
     Ok(InitCallbackResult::Pass)

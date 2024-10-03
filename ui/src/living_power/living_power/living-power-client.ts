@@ -120,4 +120,35 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 			arduinoSerialNumber,
 		);
 	}
+
+	/** External resistor value */
+
+	async setExternalResistorValue(
+		arduinoSerialNumber: string,
+		from: number,
+		to: number,
+		externalResistorValueOhms: number,
+	) {
+		await this.callZome('set_external_resistor_value', {
+			arduino_serial_number: arduinoSerialNumber,
+			external_resistor_value: {
+				from,
+				to,
+				external_resistor_value_ohms: externalResistorValueOhms,
+			},
+		});
+	}
+
+	async deleteExternalResistorValue(createLinkActionHash: ActionHash) {
+		await this.callZome('delete_external_resistor_value', createLinkActionHash);
+	}
+
+	async getAllExternalResistorValues(
+		arduinoSerialNumber: string,
+	): Promise<Array<Link>> {
+		return this.callZome(
+			'get_all_external_resistor_values',
+			arduinoSerialNumber,
+		);
+	}
 }

@@ -14,7 +14,6 @@ pub struct Measurement {
 pub struct MeasurementCollection {
     pub arduino_serial_number: String,
     pub measurements: Vec<Measurement>,
-    pub external_resistor_ohms: u32,
 }
 
 pub fn validate_create_measurement_collection(

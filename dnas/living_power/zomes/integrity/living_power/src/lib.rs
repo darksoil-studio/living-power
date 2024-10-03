@@ -2,6 +2,8 @@ use hdi::prelude::*;
 
 pub mod measurement_collection;
 pub use measurement_collection::*;
+pub mod external_resistors;
+pub use external_resistors::*;
 pub mod bpv_device_info;
 pub use bpv_device_info::*;
 pub mod all_bpv_devices;
@@ -20,6 +22,7 @@ pub enum EntryTypes {
 pub enum LinkTypes {
     AllBpvDevices,
     BpvDeviceToBpvDeviceInfo,
+    BpvDeviceToExternalResistorValues,
     BpvDeviceToMeasurementCollections,
 }
 #[hdk_extern]
@@ -172,6 +175,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     tag,
                 )
             }
+            LinkTypes::BpvDeviceToExternalResistorValues => {
+                validate_create_link_bpv_device_to_external_resistor_values(
+                    action,
+                    base_address,
+                    target_address,
+                    tag,
+                )
+            }
         },
         FlatOp::RegisterDeleteLink {
             link_type,
@@ -199,6 +210,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
             }
             LinkTypes::BpvDeviceToMeasurementCollections => {
                 validate_delete_link_bpv_device_to_measurement_collections(
+                    action,
+                    original_action,
+                    base_address,
+                    target_address,
+                    tag,
+                )
+            }
+            LinkTypes::BpvDeviceToExternalResistorValues => {
+                validate_delete_link_bpv_device_to_external_resistor_values(
                     action,
                     original_action,
                     base_address,
@@ -352,6 +372,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         tag,
                     )
                 }
+                LinkTypes::BpvDeviceToExternalResistorValues => {
+                    validate_create_link_bpv_device_to_external_resistor_values(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
             },
             OpRecord::DeleteLink {
                 original_action_hash,
@@ -393,6 +421,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                     }
                     LinkTypes::BpvDeviceToMeasurementCollections => {
                         validate_delete_link_bpv_device_to_measurement_collections(
+                            action,
+                            create_link.clone(),
+                            base_address,
+                            create_link.target_address,
+                            create_link.tag,
+                        )
+                    }
+                    LinkTypes::BpvDeviceToExternalResistorValues => {
+                        validate_delete_link_bpv_device_to_external_resistor_values(
                             action,
                             create_link.clone(),
                             base_address,

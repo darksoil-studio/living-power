@@ -42,7 +42,11 @@ import {
 import { connectedArduinos } from '../../arduinos/connected-arduinos.js';
 import { measurementsSdcards } from '../../arduinos/measurements-sdcards.js';
 import { LivingPowerClient } from './living-power-client.js';
-import { BpvDeviceInfo, MeasurementCollection } from './types.js';
+import {
+	BpvDeviceInfo,
+	ExternalResistorValue,
+	MeasurementCollection,
+} from './types.js';
 
 export function lazyLoadAndPoll<T>(
 	task: () => Promise<T>,
@@ -188,6 +192,21 @@ export class LivingPowerStore {
 						),
 				),
 			},
+			externalResistorValues: pipe(
+				pathHash,
+				hash =>
+					liveLinksSignal(
+						this.client,
+						hash,
+						() => this.client.getAllExternalResistorValues(arduinoSerialNumber),
+						'BpvDeviceToExternalResistorValues',
+					),
+				links =>
+					links.map(link => [
+						link.create_link_hash,
+						decode(link.tag) as ExternalResistorValue,
+					]),
+			),
 		};
 	});
 
