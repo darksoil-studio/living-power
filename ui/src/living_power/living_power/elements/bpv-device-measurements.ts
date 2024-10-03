@@ -21,6 +21,11 @@ import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/tab-group/tab-group.js';
 import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import '@shoelace-style/shoelace/dist/components/tab/tab.js';
+import {
+	DateTimePickerChangeEvent,
+	DateTimePickerValueChangedEvent,
+} from '@vaadin/date-time-picker';
+import '@vaadin/date-time-picker/theme/material/vaadin-date-time-picker.js';
 import type {
 	ChartConfiguration,
 	ChartData,
@@ -47,33 +52,17 @@ const MILLIS_IN_A_DAY = MILLIS_IN_AN_HOUR * 24;
 const MILLIS_IN_A_WEEK = MILLIS_IN_A_DAY * 7;
 const MILLIS_IN_A_MONTH = MILLIS_IN_A_DAY * 30;
 
-export function isTimestampInTimeFilter(
-	timestamp: number,
-	timeFilter: TimeFilter,
-): boolean {
-	switch (timeFilter) {
-		case 'last_day':
-			const timestampForOneDayAgo = Date.now() - MILLIS_IN_A_DAY;
-			return timestamp / 1000 > timestampForOneDayAgo;
-		case 'last_week':
-			const timestampForOneWeekAgo = Date.now() - MILLIS_IN_A_WEEK;
-			return timestamp / 1000 > timestampForOneWeekAgo;
-		case 'last_month':
-			const timestampForOneMonthAgo = Date.now() - MILLIS_IN_A_MONTH;
-			return timestamp / 1000 > timestampForOneMonthAgo;
-		case 'all_time':
-			return true;
-	}
-}
-
 export function measurementCollectionToChartMeasurements(
 	measurementCollections: Array<MeasurementCollection>,
-	timeFilter: TimeFilter,
+	startTime: number,
+	endTime: number,
 ): ChartMeasurement[] {
 	return ([] as ChartMeasurement[]).concat(
 		...measurementCollections.map(mc =>
 			mc.measurements
-				.filter(m => isTimestampInTimeFilter(m.timestamp, timeFilter))
+				.filter(
+					m => m.timestamp / 1000 <= endTime && m.timestamp / 1000 >= startTime,
+				)
 				.map(m => {
 					const intensity_micro_amperes =
 						m.voltage_millivolts / 1000 / mc.external_resistor_ohms;
@@ -91,11 +80,13 @@ export function measurementCollectionToChartMeasurements(
 
 export function chartData(
 	measurementCollections: Array<MeasurementCollection>,
-	timeFilter: TimeFilter,
+	startTime: number,
+	endTime: number,
 ): ChartData<'line'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
-		timeFilter,
+		startTime,
+		endTime,
 	);
 	return {
 		datasets: [
@@ -236,11 +227,13 @@ export const chartOptions: ChartOptions<'line'> = {
 
 export function intensityVoltageChartData(
 	measurementCollections: Array<MeasurementCollection>,
-	timeFilter: TimeFilter,
+	startTime: number,
+	endTime: number,
 ): ChartData<'scatter'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
-		timeFilter,
+		startTime,
+		endTime,
 	);
 	return {
 		datasets: [
@@ -302,9 +295,6 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 	@consume({ context: livingPowerStoreContext, subscribe: true })
 	livingPowerStore!: LivingPowerStore;
 
-	@state()
-	timeFilter: TimeFilter = 'last_week';
-
 	renderTimeChart(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
 	) {
@@ -314,7 +304,8 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 					.options=${chartOptions}
 					.data=${chartData(
 						measurementsCollections.map(r => r.entry),
-						this.timeFilter,
+						this.startTime,
+						this.endTime,
 					)}
 				></line-chart>
 			</div>
@@ -330,7 +321,8 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 					.options=${intensityVoltageChartOptions}
 					.data=${intensityVoltageChartData(
 						measurementsCollections.map(r => r.entry),
-						this.timeFilter,
+						this.startTime,
+						this.endTime,
 					)}
 				></scatter-chart>
 			</div>
@@ -339,6 +331,12 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 
 	@state()
 	selectedTab: string = 'time-chart';
+
+	@state()
+	startTime: number = Date.now() - MILLIS_IN_A_WEEK;
+
+	@state()
+	endTime: number = Date.now();
 
 	renderMeasurements(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
@@ -395,9 +393,11 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										slot="nav"
 										panel="time-chart"
 										.active=${this.selectedTab === 'time-chart'}
-										>${msg('Time Chart')}</sl-tab
+									>
+										<span>${msg('Time Chart')}</span></sl-tab
 									>
 									<sl-tab
+										style="display: none"
 										slot="nav"
 										panel="intensity-voltage"
 										.active=${this.selectedTab === 'intensity-voltage'}
@@ -414,28 +414,41 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 									<div
 										slot="nav"
 										class="row"
-										style="align-items: center; margin-right: 4px"
+										style="align-items: center; margin-right: 4px; gap: 12px"
 									>
-										<sl-radio-group
-											value="last_week"
-											@sl-change=${(e: CustomEvent) => {
-												this.timeFilter = (e.target as SlRadioGroup)
-													.value as TimeFilter;
-											}}
-										>
-											<sl-radio-button value="last_day"
-												>${msg('Last day')}</sl-radio-button
-											>
-											<sl-radio-button value="last_week"
-												>${msg('Last week')}
-											</sl-radio-button>
-											<sl-radio-button value="last_month"
-												>${msg('Last month')}
-											</sl-radio-button>
-											<sl-radio-button value="all_time"
-												>${msg('All time')}
-											</sl-radio-button>
-										</sl-radio-group>
+										<vaadin-date-time-picker
+											.value=${new Date(this.startTime)
+												.toISOString()
+												.slice(0, 16)}
+											@change="${(event: DateTimePickerChangeEvent) => {
+												console.log('change', event.target.value);
+												this.startTime = new Date(event.target.value).valueOf();
+												if (this.startTime > this.endTime) {
+													this.endTime = this.startTime + MILLIS_IN_A_DAY;
+												}
+
+												// const startTime = new Date(
+												// 	event.detail.value,
+												// ).valueOf();
+												// if (startTime !== this.startTime) {
+												// 	this.startTime = startTime;
+												// }
+											}}"
+											style="width: 16em"
+										></vaadin-date-time-picker>
+										<span>${msg('to')}</span>
+										<vaadin-date-time-picker
+											.value=${new Date(this.endTime)
+												.toISOString()
+												.slice(0, 16)}
+											.min=${new Date(this.startTime)
+												.toISOString()
+												.slice(0, 16)}
+											@change="${(event: DateTimePickerChangeEvent) => {
+												this.endTime = new Date(event.target.value).valueOf();
+											}}"
+											style="width: 16em"
+										></vaadin-date-time-picker>
 									</div>
 								</sl-tab-group>
 							`}
@@ -507,6 +520,9 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 			.tab-content {
 				flex: 1;
 				max-height: 100%;
+			}
+			vaadin-date-time-picker {
+				margin-bottom: 0px;
 			}
 		`,
 	];

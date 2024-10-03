@@ -97,7 +97,9 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 						name="arrow-left"
 						@click=${() => this.router.pop()}
 					></sl-icon-button>
-					<span class="title" style="flex: 1">${msg('Living Power')}</span>
+					<span class="title" style="flex: 1; color: white;"
+						>${msg('Living Power')}</span
+					>
 				</div>
 
 				<my-profile style="margin: 16px"></my-profile>

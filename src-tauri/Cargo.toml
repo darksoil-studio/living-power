@@ -1,8 +1,8 @@
 [package]
 name = "living-power"
-version = "0.0.8"
+version = "0.1.0"
 description = "Living Power"
-authors = ["you"]
+authors = ["guillem@darksoil.studio"]
 license = ""
 repository = ""
 edition = "2021"
@@ -28,10 +28,13 @@ url2 = "0.0.6"
 app_dirs2 = "2.5.5"
 tempdir = "0.3.7"
 anyhow = "1"
+opener = { version = "0.7", features = ["reveal"] }
 
 tauri = { version = "2.0.0-rc", features = [] }
 tauri-plugin-holochain = { git = "https://github.com/darksoil-studio/p2p-shipyard", branch = "next" }
 tauri-plugin-log = "2.0.0-rc"
+tauri-plugin-dialog = "2.0.0-rc"
+tauri-plugin-process = "2.0.0-rc.1"
 
 holochain_client = { version = "0.6.0-dev" }
 holochain_types = { version = "0.4.0-dev" }
@@ -42,7 +45,6 @@ mountpoints = "0.2"
 serialport = { version = "4.3", features = ["serde"] }
 
 living_power_integrity = { path = "../dnas/living_power/zomes/integrity/living_power" }
-tauri-plugin-process = "2.0.0-rc.1"
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-updater = "2.0.0-rc"

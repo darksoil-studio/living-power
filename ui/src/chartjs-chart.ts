@@ -19,7 +19,6 @@ export abstract class BaseChartjs<
 
 	@property()
 	set options(options: ChartOptions<CHART_TYPE>) {
-		console.log('setting options');
 		this._options = options;
 
 		if (this._chart) {
@@ -49,7 +48,6 @@ export abstract class BaseChartjs<
 	_chart: Chart<CHART_TYPE> | undefined;
 	get chart(): Chart<CHART_TYPE> {
 		if (!this._chart) {
-			console.log('constructing chart', this._options, this._data);
 			this._chart = new Chart<CHART_TYPE>(this.canvas.getContext('2d')!, {
 				type: this.type() as CHART_TYPE,
 				data: this._data || {
@@ -62,8 +60,8 @@ export abstract class BaseChartjs<
 	}
 
 	render() {
-		return html` <div style="postition: relative; height: 100%; width: 100%">
-			<canvas></canvas>
+		return html` <div style="position: relative; height: 100%; width: 100%">
+			<canvas style="height: 100%; width: 100%"></canvas>
 		</div>`;
 	}
 }

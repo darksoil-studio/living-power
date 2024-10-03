@@ -1,6 +1,6 @@
 {
 	"productName": "Living Power",
-	"version": "0.0.8",
+	"version": "0.1.0",
 	"identifier": "studio.darksoil.livingpower",
 	"build": {
 		"beforeBuildCommand": "pnpm -F ui build",

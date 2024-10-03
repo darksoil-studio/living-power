@@ -172,7 +172,9 @@ export class HomePage extends SignalWatcher(LitElement) {
 		if (allBpvDevicesLatest.status !== 'completed') return html``;
 
 		if (allBpvDevicesLatest.value.size === 0)
-			return html`<span class="title">${msg('Living Power')}</span>`;
+			return html`<span class="title" style="color: white;"
+				>${msg('Living Power')}</span
+			>`;
 
 		const pathname = this.routes.currentPathname();
 		const selectedSerialNumber = pathname.split('bpv-devices/')[1];
@@ -198,7 +200,7 @@ export class HomePage extends SignalWatcher(LitElement) {
 		return html`
 			<div class="column" style="flex: 1">
 				<div class="row top-bar">
-					<div class="row" style="flex: 1; gap: 12px; ">
+					<div class="row" style="flex: 1; gap: 12px;">
 						${this.renderTitle()}
 					</div>
 

@@ -3,14 +3,15 @@ use std::{collections::HashMap, time::Duration};
 
 use anyhow::anyhow;
 use serialport::available_ports;
-use tauri::AppHandle;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::{AppHandle, Manager};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
 use holochain_client::{AppStatusFilter, ZomeCallTarget};
 use holochain_conductor_api::CellInfo;
 use holochain_types::prelude::{AppBundle, ExternIO};
 use lair_keystore::dependencies::sodoken::{BufRead, BufWrite};
 use tauri_plugin_holochain::{HolochainExt, HolochainPluginConfig, WANNetworkConfig};
-use tauri_plugin_log::Target;
 
 mod arduino;
 mod collect_measurements;
@@ -42,6 +43,7 @@ pub fn run() {
                 .level(log::LevelFilter::Warn)
                 .build(),
         )
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_holochain::init(
             vec_to_locked(vec![]).expect("Can't build passphrase"),
@@ -55,10 +57,71 @@ pub fn run() {
             sdcards::list_measurements_sdcards,
             sdcards::collect_measurements_from_sdcard
         ])
+        .menu(|handle| {
+            Menu::with_items(
+                handle,
+                &[&Submenu::with_items(
+                    handle,
+                    "File",
+                    true,
+                    &[
+                        &MenuItem::with_id(
+                            handle,
+                            "open-logs-folder",
+                            "Open Logs Folder",
+                            true,
+                            None::<&str>,
+                        )?,
+                        &MenuItem::with_id(
+                            handle,
+                            "factory-reset",
+                            "Factory Reset",
+                            true,
+                            None::<&str>,
+                        )?,
+                        &PredefinedMenuItem::close_window(handle, None)?,
+                    ],
+                )?],
+            )
+        })
         .setup(|app| {
             #[cfg(not(mobile))]
             app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
+
+            app.handle()
+                .on_menu_event(|app_handle, menu_event| match menu_event.id().as_ref() {
+                    "open-logs-folder" => {
+                        let log_folder = app_handle
+                            .path()
+                            .app_log_dir()
+                            .expect("Could not get app log dir");
+                        if let Err(err) = opener::reveal(log_folder.clone()) {
+                            log::error!("Failed to open log dir at {log_folder:?}: {err:?}");
+                        }
+                    }
+                    "factory-reset" => {
+                        let h = app_handle.clone();
+                         app_handle
+                                .dialog()
+                                .message("Are you sure you want to perform a factory reset? All your data will be lost.")
+                                .title("Factory Reset")
+                                .buttons(MessageDialogButtons::OkCancel)
+                                .show(move |result| match result {
+                                    true => {
+                                        if let Err(err) = std::fs::remove_dir_all(holochain_dir()) {
+                                            log::error!("Failed to perform factory reset: {err:?}");
+                                        } else {
+                                            h.restart();
+                                        }
+                                    }
+                                    false => {
+            
+                                    }
+                                });
+                    }
+                    _ => {}
+                });
 
             let handle = app.handle().clone();
             let result: anyhow::Result<()> = tauri::async_runtime::block_on(async move {
@@ -231,8 +294,23 @@ fn holochain_dir() -> PathBuf {
             },
         )
         .expect("Could not get app root")
-        .join("holochain")
+        .join(get_version())
     }
+}
+
+fn get_version() -> String {
+    let semver = std::env!("CARGO_PKG_VERSION");
+
+    if semver.starts_with("0.0.") {
+        return semver.to_string();
+    }
+
+    if semver.starts_with("0.") {
+        let v: Vec<&str> = semver.split(".").collect();
+        return format!("{}.{}", v[0], v[1]);
+    }
+    let v: Vec<&str> = semver.split(".").collect();
+    return format!("{}", v[0]);
 }
 
 fn vec_to_locked(mut pass_tmp: Vec<u8>) -> std::io::Result<BufRead> {
