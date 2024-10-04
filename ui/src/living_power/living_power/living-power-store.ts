@@ -202,10 +202,13 @@ export class LivingPowerStore {
 						'BpvDeviceToExternalResistorValues',
 					),
 				links =>
-					links.map(link => [
-						link.create_link_hash,
-						decode(link.tag) as ExternalResistorValue,
-					]),
+					links.map(
+						link =>
+							[link.create_link_hash, decode(link.tag)] as [
+								ActionHash,
+								ExternalResistorValue,
+							],
+					),
 			),
 		};
 	});

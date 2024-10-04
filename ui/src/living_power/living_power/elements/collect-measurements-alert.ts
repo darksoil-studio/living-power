@@ -59,29 +59,12 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 		this.collecting = true;
 		try {
 			const measurements = await collectMeasurements(serialPortInfo.port_name);
-			const measurementCollection: MeasurementCollection = {
-				arduino_serial_number: arduinoSerialNumber,
-				measurements: measurements!,
-			};
-			const actionHashes =
-				await this._livingPowerStore.client.createMeasurementCollection(
-					measurementCollection,
-				);
-
-			this.dispatchEvent(
-				new CustomEvent('measurement-collections-created', {
-					composed: true,
-					bubbles: true,
-					detail: {
-						measurementCollectionsHashes: actionHashes,
-					},
-				}),
-			);
-			(
-				this.shadowRoot?.getElementById(
-					`save-measurement-dialog-${arduinoSerialNumber}`,
-				) as SlDialog
-			).show();
+			await this.createMeasurementCollection(arduinoSerialNumber, measurements);
+			// (
+			// 	this.shadowRoot?.getElementById(
+			// 		`save-measurement-dialog-${arduinoSerialNumber}`,
+			// 	) as SlDialog
+			// ).show();
 		} catch (e) {
 			console.error(e);
 			notifyError(msg('Error synchronizing the data.'));
@@ -91,16 +74,34 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 
 	async createMeasurementCollection(
 		arduinoSerialNumber: string,
-		external_resistor_ohms: number,
+		measurements: Measurement[],
 	) {
-		try {
-			this.committing = true;
-			this.measurements = [];
-		} catch (e: unknown) {
-			console.error(e);
-			notifyError(msg('Error saving the new measurements.'));
-		}
-		this.committing = false;
+		const measurementCollection: MeasurementCollection = {
+			arduino_serial_number: arduinoSerialNumber,
+			measurements: measurements!,
+		};
+		const actionHashes =
+			await this._livingPowerStore.client.createMeasurementCollection(
+				measurementCollection,
+			);
+
+		this.dispatchEvent(
+			new CustomEvent('measurement-collections-created', {
+				composed: true,
+				bubbles: true,
+				detail: {
+					measurementCollectionsHashes: actionHashes,
+				},
+			}),
+		);
+		// try {
+		// 	this.committing = true;
+		// 	this.measurements = [];
+		// } catch (e: unknown) {
+		// 	console.error(e);
+		// 	notifyError(msg('Error saving the new measurements.'));
+		// }
+		// this.committing = false;
 	}
 
 	allMeasurementsForDevice(
@@ -283,12 +284,26 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 						variant="primary"
 						.loading=${this.collecting}
 						@click=${async () => {
-							this.measurements = sdcardMeasurements.value;
-							(
-								this.shadowRoot?.getElementById(
-									`save-measurement-dialog-${arduinoSerialNumber}`,
-								) as SlDialog
-							).show();
+							// this.measurements = sdcardMeasurements.value;
+							// (
+							// 	this.shadowRoot?.getElementById(
+							// 		`save-measurement-dialog-${arduinoSerialNumber}`,
+							// 	) as SlDialog
+							// ).show();
+							try {
+								await this.createMeasurementCollection(
+									arduinoSerialNumber,
+									sdcardMeasurements.value,
+								);
+								// (
+								// 	this.shadowRoot?.getElementById(
+								// 		`save-measurement-dialog-${arduinoSerialNumber}`,
+								// 	) as SlDialog
+								// ).show();
+							} catch (e) {
+								console.error(e);
+								notifyError(msg('Error synchronizing the data.'));
+							}
 						}}
 					>
 						<sl-icon

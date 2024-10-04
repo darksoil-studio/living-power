@@ -28,6 +28,7 @@ import { livingPowerStoreContext } from './living_power/living_power/context.js'
 import './living_power/living_power/elements/bpv-device-detail.js';
 import './living_power/living_power/elements/bpv-device-measurements.js';
 import './living_power/living_power/elements/collect-measurements-alert.js';
+import './living_power/living_power/elements/external-resistors-values.js';
 import './living_power/living_power/elements/new-arduino-connected-alert.js';
 import {
 	LivingPowerStore,
@@ -190,26 +191,27 @@ export class HomePage extends SignalWatcher(LitElement) {
 			>`;
 
 		const pathname = this.routes.currentPathname();
-		const selectedSerialNumber = pathname.split('bpv-devices/')[1];
+		const selectedSerialNumber = pathname.split('/')[1];
 
 		if (pathname.includes('external-resistors-values')) {
 			return html`
-				<div class="row" style="align-items: center">
+				<div class="row" style="align-items: center; ">
 					<sl-icon-button
+						style="color: white"
 						.src=${wrapPathInSvg(mdiArrowLeft)}
 						@click=${() =>
 							this.routes.goto(`bpv-devices/${selectedSerialNumber}`)}
 					></sl-icon-button>
-					<span class="title"
+					<span class="title" style="color: white"
 						>${msg(
-							`External Resistors Values for ${allBpvDevicesLatest.value.get(selectedSerialNumber)!.name}`,
+							`External Resistors Values for ${allBpvDevicesLatest.value.get(selectedSerialNumber)?.name}`,
 						)}
 					</span>
 				</div>
 			`;
 		}
 
-		return html`<div class="row" style="align-items: center">
+		return html`<div class="row" style="align-items: center; flex: 1">
 			<sl-select
 				.value=${selectedSerialNumber}
 				@sl-change=${(e: CustomEvent) => {
@@ -230,7 +232,12 @@ export class HomePage extends SignalWatcher(LitElement) {
 			</sl-select>
 			<div style="flex: 1"></div>
 
-			<sl-button @click=${() => {}}
+			<sl-button
+				@click=${() => {
+					this.routes.goto(
+						`bpv-devices/${selectedSerialNumber}/external-resistors-values`,
+					);
+				}}
 				>${msg('External Resistors Values')}</sl-button
 			>
 		</div>`;
@@ -243,8 +250,6 @@ export class HomePage extends SignalWatcher(LitElement) {
 					<div class="row" style="flex: 1; gap: 12px;">
 						${this.renderTitle()}
 					</div>
-
-					<div class="row" style="gap: 16px" slot="actionItems"></div>
 				</div>
 				<div class="column " style="flex: 1; padding: 16px">
 					${this.routes.outlet()}

@@ -6,6 +6,7 @@ use crate::bpv_device::bpv_device_hash;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetExternalResistorValueInput {
     arduino_serial_number: String,
+    previous_create_link_action_hash: Option<ActionHash>,
     external_resistor_value: ExternalResistorValue,
 }
 
@@ -18,6 +19,10 @@ pub struct ExternalResistorValue {
 
 #[hdk_extern]
 pub fn set_external_resistor_value(input: SetExternalResistorValueInput) -> ExternResult<()> {
+    if let Some(action_hash) = input.previous_create_link_action_hash {
+        delete_link(action_hash)?;
+    }
+
     let base = bpv_device_hash(input.arduino_serial_number)?;
     let tag = SerializedBytes::try_from(input.external_resistor_value)
         .map_err(|err| wasm_error!(WasmErrorInner::Guest(format!("{err:?}"))))?;
@@ -28,12 +33,6 @@ pub fn set_external_resistor_value(input: SetExternalResistorValueInput) -> Exte
         tag.bytes().to_vec(),
     )?;
 
-    Ok(())
-}
-
-#[hdk_extern]
-pub fn delete_external_resistor_value(create_link_action_hash: ActionHash) -> ExternResult<()> {
-    delete_link(create_link_action_hash)?;
     Ok(())
 }
 

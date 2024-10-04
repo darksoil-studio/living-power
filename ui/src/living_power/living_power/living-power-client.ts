@@ -128,19 +128,17 @@ export class LivingPowerClient extends ZomeClient<LivingPowerSignal> {
 		from: number,
 		to: number,
 		externalResistorValueOhms: number,
+		previousCreateLinkActionHash: ActionHash | undefined,
 	) {
 		await this.callZome('set_external_resistor_value', {
 			arduino_serial_number: arduinoSerialNumber,
+			previous_create_link_action_hash: previousCreateLinkActionHash,
 			external_resistor_value: {
 				from,
 				to,
 				external_resistor_value_ohms: externalResistorValueOhms,
 			},
 		});
-	}
-
-	async deleteExternalResistorValue(createLinkActionHash: ActionHash) {
-		await this.callZome('delete_external_resistor_value', createLinkActionHash);
 	}
 
 	async getAllExternalResistorValues(

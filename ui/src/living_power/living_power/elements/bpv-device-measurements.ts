@@ -39,12 +39,16 @@ import { appStyles } from '../../../app-styles.js';
 import '../../../chartjs-chart.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
-import { Measurement, MeasurementCollection } from '../types.js';
+import {
+	ExternalResistorValue,
+	Measurement,
+	MeasurementCollection,
+} from '../types.js';
 
 export interface ChartMeasurement extends Measurement {
-	external_resistor_ohms: number;
-	intensity_micro_amperes: number;
-	power_micro_watts: number;
+	external_resistor_ohms: number | undefined;
+	intensity_micro_amperes: number | undefined;
+	power_micro_watts: number | undefined;
 }
 
 const MILLIS_IN_AN_HOUR = 1000 * 60 * 60;
@@ -54,6 +58,7 @@ const MILLIS_IN_A_MONTH = MILLIS_IN_A_DAY * 30;
 
 export function measurementCollectionToChartMeasurements(
 	measurementCollections: Array<MeasurementCollection>,
+	externalResistorsValues: Array<ExternalResistorValue>,
 	startTime: number,
 	endTime: number,
 ): ChartMeasurement[] {
@@ -64,14 +69,23 @@ export function measurementCollectionToChartMeasurements(
 					m => m.timestamp / 1000 <= endTime && m.timestamp / 1000 >= startTime,
 				)
 				.map(m => {
-					const intensity_micro_amperes =
-						m.voltage_millivolts / 1000 / mc.external_resistor_ohms;
+					const externalResistor = externalResistorsValues.find(
+						er => er.from >= m.timestamp && er.to <= m.timestamp,
+					);
+					const intensity_micro_amperes = externalResistor
+						? m.voltage_millivolts /
+							1000 /
+							externalResistor.external_resistor_value_ohms
+						: undefined;
+					const power_micro_watts = intensity_micro_amperes
+						? (intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000
+						: undefined;
 					return {
 						...m,
-						external_resistor_ohms: mc.external_resistor_ohms,
+						external_resistor_ohms:
+							externalResistor?.external_resistor_value_ohms,
 						intensity_micro_amperes,
-						power_micro_watts:
-							(intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000,
+						power_micro_watts,
 					};
 				}),
 		),
@@ -80,11 +94,13 @@ export function measurementCollectionToChartMeasurements(
 
 export function chartData(
 	measurementCollections: Array<MeasurementCollection>,
+	externalResistorsValues: Array<ExternalResistorValue>,
 	startTime: number,
 	endTime: number,
 ): ChartData<'line'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
+		externalResistorsValues,
 		startTime,
 		endTime,
 	);
@@ -136,20 +152,25 @@ export function chartData(
 			},
 			{
 				label: msg('External Resistor (kOhms)'),
-				data: allMeasurements.map(m => ({
-					x: m.timestamp / 1000,
-					y: m.external_resistor_ohms / 1000,
-				})),
+				data: allMeasurements
+					.filter(m => m.external_resistor_ohms !== undefined)
+					.map(m => ({
+						x: m.timestamp / 1000,
+						y: m.external_resistor_ohms! / 1000,
+					})),
 				parsing: false,
 				yAxisID: 'resistor',
 				stepped: true,
 			},
 			{
 				label: msg('Power (uW)'),
-				data: allMeasurements.map(m => ({
-					x: m.timestamp / 1000,
-					y: m.power_micro_watts,
-				})),
+				data: allMeasurements
+
+					.filter(m => m.power_micro_watts !== undefined)
+					.map(m => ({
+						x: m.timestamp / 1000,
+						y: m.power_micro_watts!,
+					})),
 				parsing: false,
 				yAxisID: 'power',
 				cubicInterpolationMode: 'monotone',
@@ -157,10 +178,12 @@ export function chartData(
 			},
 			{
 				label: msg('Intensity (uA)'),
-				data: allMeasurements.map(m => ({
-					x: m.timestamp / 1000,
-					y: m.intensity_micro_amperes,
-				})),
+				data: allMeasurements
+					.filter(m => m.intensity_micro_amperes !== undefined)
+					.map(m => ({
+						x: m.timestamp / 1000,
+						y: m.intensity_micro_amperes!,
+					})),
 				parsing: false,
 				yAxisID: 'intensity',
 				cubicInterpolationMode: 'monotone',
@@ -227,11 +250,13 @@ export const chartOptions: ChartOptions<'line'> = {
 
 export function intensityVoltageChartData(
 	measurementCollections: Array<MeasurementCollection>,
+	externalResistorsValues: Array<ExternalResistorValue>,
 	startTime: number,
 	endTime: number,
 ): ChartData<'scatter'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
+		externalResistorsValues,
 		startTime,
 		endTime,
 	);
@@ -239,10 +264,12 @@ export function intensityVoltageChartData(
 		datasets: [
 			{
 				label: undefined,
-				data: allMeasurements.map(m => ({
-					x: m.intensity_micro_amperes,
-					y: m.voltage_millivolts / 1000,
-				})),
+				data: allMeasurements
+					.filter(m => m.intensity_micro_amperes !== undefined)
+					.map(m => ({
+						x: m.intensity_micro_amperes!,
+						y: m.voltage_millivolts / 1000,
+					})),
 				parsing: false,
 				cubicInterpolationMode: 'monotone',
 				tension: 0.4,
@@ -297,6 +324,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 
 	renderTimeChart(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
+		externalResistors: Array<ExternalResistorValue>,
 	) {
 		return html`
 			<div class="tab-content">
@@ -304,6 +332,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 					.options=${chartOptions}
 					.data=${chartData(
 						measurementsCollections.map(r => r.entry),
+						externalResistors,
 						this.startTime,
 						this.endTime,
 					)}
@@ -314,6 +343,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 
 	renderIntensityVoltageChart(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
+		externalResistors: Array<ExternalResistorValue>,
 	) {
 		return html`
 			<div class="tab-content">
@@ -321,6 +351,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 					.options=${intensityVoltageChartOptions}
 					.data=${intensityVoltageChartData(
 						measurementsCollections.map(r => r.entry),
+						externalResistors,
 						this.startTime,
 						this.endTime,
 					)}
@@ -340,6 +371,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 
 	renderMeasurements(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
+		externalResistors: Array<ExternalResistorValue>,
 	) {
 		return html`
 			<sl-card style="flex: 1; display: flex;">
@@ -405,9 +437,13 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 									>
 									<sl-tab-panel active style="padding: 0 16px; display: flex"
 										>${this.selectedTab === 'time-chart'
-											? this.renderTimeChart(measurementsCollections)
+											? this.renderTimeChart(
+													measurementsCollections,
+													externalResistors,
+												)
 											: this.renderIntensityVoltageChart(
 													measurementsCollections,
+													externalResistors,
 												)}</sl-tab-panel
 									>
 									<span slot="nav" style="flex: 1"> </span>
@@ -421,7 +457,6 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 												.toISOString()
 												.slice(0, 16)}
 											@change="${(event: DateTimePickerChangeEvent) => {
-												console.log('change', event.target.value);
 												this.startTime = new Date(event.target.value).valueOf();
 												if (this.startTime > this.endTime) {
 													this.endTime = this.startTime + MILLIS_IN_A_DAY;
@@ -457,23 +492,36 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 		`;
 	}
 
-	allMeasurementsCollections() {
+	allMeasurementsAndResistors() {
 		const allMeasurements = this.livingPowerStore.bpvDevices
 			.get(this.arduinoSerialNumber)
 			.measurementCollections.live.get();
+		const externalResistorsValues = this.livingPowerStore.bpvDevices
+			.get(this.arduinoSerialNumber)
+			.externalResistorValues.get();
 		if (allMeasurements.status !== 'completed') return allMeasurements;
 
 		const allMeasurementsEntries = joinAsync(
 			Array.from(allMeasurements.value.values()).map(mc => mc.entry.get()),
 		);
+		if (allMeasurementsEntries.status !== 'completed')
+			return allMeasurementsEntries;
+		if (externalResistorsValues.status !== 'completed')
+			return externalResistorsValues;
 
-		return allMeasurementsEntries;
+		return {
+			status: 'completed' as const,
+			value: {
+				measurements: allMeasurementsEntries.value,
+				externalResistors: externalResistorsValues.value,
+			},
+		};
 	}
 
 	render() {
-		const allMeasurementsCollections = this.allMeasurementsCollections();
+		const result = this.allMeasurementsAndResistors();
 
-		switch (allMeasurementsCollections.status) {
+		switch (result.status) {
 			case 'pending':
 				return html`<div
 					style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;"
@@ -483,10 +531,13 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 			case 'error':
 				return html`<display-error
 					.headline=${msg('Error fetching the bpv device')}
-					.error=${allMeasurementsCollections.error}
+					.error=${result.error}
 				></display-error>`;
 			case 'completed':
-				return this.renderMeasurements(allMeasurementsCollections.value);
+				return this.renderMeasurements(
+					result.value.measurements,
+					result.value.externalResistors.map(([_, v]) => v),
+				);
 		}
 	}
 
@@ -520,9 +571,6 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 			.tab-content {
 				flex: 1;
 				max-height: 100%;
-			}
-			vaadin-date-time-picker {
-				margin-bottom: 0px;
 			}
 		`,
 	];

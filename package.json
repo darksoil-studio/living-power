@@ -6,7 +6,7 @@
     "network": "pnpm build:happ && concurrently -k \"pnpm -F ui start\" \"pnpm launch\"",
     "launch": "concurrently-repeat \"pnpm tauri dev --no-watch\" $AGENTS",
     "test": "pnpm run build:happ && pnpm -F tests test",
-    "build:happ": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ.meta.debug -o workdir/living-power.happ",
+    "build:happ": "echo \"test\" > workdir/living_power_dna-hash && nix build -L .#living_power_happ.meta.debug -o workdir/living-power.happ",
     "build:happ-release": "nix build .#living_power_dna.hash -o workdir/living_power_dna && nix build -L .#living_power_happ -o workdir/living-power.happ",
     "network:android": "pnpm build:happ && concurrently -k \"pnpm local-services\" \"UI_PORT=1420 pnpm -F ui start\" \"pnpm tauri dev\" \"pnpm tauri android dev\"",
     "build:zomes": "CARGO_TARGET_DIR=target cargo build --release --target wasm32-unknown-unknown --workspace --exclude living-power",
