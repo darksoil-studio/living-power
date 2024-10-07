@@ -4,14 +4,13 @@ import { EntryRecord } from '@holochain-open-dev/utils';
 import { ActionHash } from '@holochain/client';
 import { consume } from '@lit/context';
 import { msg, str } from '@lit/localize';
-import { mdiAlert, mdiInformationOutline } from '@mdi/js';
+import { mdiAlert, mdiAlertCircle, mdiInformationOutline } from '@mdi/js';
 import { SlInput } from '@shoelace-style/shoelace';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import {
 	DateTimePicker,
 	DateTimePickerChangeEvent,
 } from '@vaadin/date-time-picker';
-import '@vaadin/date-time-picker/theme/material/vaadin-date-time-picker.js';
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
@@ -23,70 +22,206 @@ import {
 	Measurement,
 	MeasurementCollection,
 } from '../types.js';
+import './external-resistors-values-form.js';
 
-interface MissingResistorsValueTimeSlot {
-	from: number;
-	to: number;
-	measurementCount: number;
-}
+//   sortedValues.map(
+// (timeSlot, i) => html`
+// 	<div class="row" style="gap: 12px; align-items: center">
+// 		<vaadin-date-time-picker
+// 			style="height: 48px"
+// 			id="from-${i}"
+// 			.value=${new Date(timeSlot.from / 1000)
+// 				.toISOString()
+// 				.slice(0, 23)}
+// 			.min=${this.fromMinDate(sortedValues, i)
+// 				? new Date(this.fromMinDate(sortedValues, i)! / 1000)
+// 						.toISOString()
+// 						.slice(0, 23)
+// 				: ''}
+// 			.max=${(
+// 				this.shadowRoot!.getElementById(
+// 					`to-${i}`,
+// 				) as DateTimePicker
+// 			)?.value}
+// 			step="1"
+// 			@change=${async (event: DateTimePickerChangeEvent) => {
+// 				const startTime = new Date(
+// 					`${event.target.value}Z`,
+// 				).valueOf();
+// 				const endTime = new Date(
+// 					`${
+// 						(
+// 							this.shadowRoot!.getElementById(
+// 								`to-${i}`,
+// 							) as DateTimePicker
+// 						).value
+// 					}Z`,
+// 				).valueOf();
 
-export function missingResistorValuesTimeSlots(
-	measurements: Measurement[],
-	externalResistorsValues: Array<ExternalResistorValue>,
-): Array<MissingResistorsValueTimeSlot> {
-	const missingResistorMeasurements = measurements.filter(
-		m =>
-			!externalResistorsValues.find(
-				erv => erv.from <= m.timestamp && erv.to >= m.timestamp,
-			),
-	);
-	console.log(missingResistorMeasurements);
-	//
+// 				const ohms = (timeSlot as ExternalResistorValue)
+// 					.external_resistor_value_ohms;
+// 				if (
+// 					ohms &&
+// 					this.formError(sortedValues, i) === undefined
+// 				) {
+// 					const actionHash = (
+// 						timeSlot as ExternalResistorValue & {
+// 							create_link_action_hash: ActionHash;
+// 						}
+// 					).create_link_action_hash;
 
-	const aggregated = (
-		missingResistorMeasurements.map(m => ({
-			type: 'measurement' as const,
-			timestamp: m.timestamp,
-		})) as Array<{
-			type: 'measurement' | 'external-resistor-value';
-			timestamp: number;
-		}>
-	)
-		.concat(
-			externalResistorsValues.map(erv => ({
-				type: 'external-resistor-value' as const,
-				timestamp: erv.from,
-			})),
-		)
-		.sort((a, b) => a.timestamp - b.timestamp);
+// 					await this.livingPowerStore.client.setExternalResistorValue(
+// 						this.arduinoSerialNumber,
+// 						startTime * 1000,
+// 						endTime * 1000,
+// 						ohms,
+// 						actionHash,
+// 					);
+// 				}
+// 				this.requestUpdate();
+// 			}}
+// 			.errorMessage=${this.formErrorFrom(sortedValues, i)}
+// 		>
+// 		</vaadin-date-time-picker>
+// 		<span>${msg('to')}</span>
+// 		<vaadin-date-time-picker
+// 			style="height: 48px"
+// 			id="to-${i}"
+// 			.value=${new Date(timeSlot.to / 1000)
+// 				.toISOString()
+// 				.slice(0, 23)}
+// 			step="1"
+// 			.min=${(
+// 				this.shadowRoot!.getElementById(
+// 					`from-${i}`,
+// 				) as DateTimePicker
+// 			)?.value}
+// 			.max=${this.toMaxDate(sortedValues, i)
+// 				? new Date(this.toMaxDate(sortedValues, i)! / 1000)
+// 						.toISOString()
+// 						.slice(0, 23)
+// 				: ''}
+// 			@change=${async (event: DateTimePickerChangeEvent) => {
+// 				const startTime = new Date(
+// 					`${
+// 						(
+// 							this.shadowRoot!.getElementById(
+// 								`from-${i}`,
+// 							) as DateTimePicker
+// 						).value
+// 					}Z`,
+// 				).valueOf();
+// 				const endTime = new Date(
+// 					`${event.target.value}Z`,
+// 				).valueOf();
 
-	const missingTimeSlots: Array<MissingResistorsValueTimeSlot> = [];
-	let currentTimeSlot: MissingResistorsValueTimeSlot | undefined;
+// 				const ohms = (timeSlot as ExternalResistorValue)
+// 					.external_resistor_value_ohms;
+// 				if (
+// 					ohms &&
+// 					this.formError(sortedValues, i) === undefined
+// 				) {
+// 					const actionHash = (
+// 						timeSlot as ExternalResistorValue & {
+// 							create_link_action_hash: ActionHash;
+// 						}
+// 					).create_link_action_hash;
 
-	for (const item of aggregated) {
-		if (item.type === 'measurement') {
-			if (!currentTimeSlot) {
-				currentTimeSlot = {
-					from: item.timestamp,
-					to: item.timestamp,
-					measurementCount: 1,
-				};
-			} else {
-				currentTimeSlot.to = item.timestamp;
-				currentTimeSlot.measurementCount += 1;
-			}
-		} else {
-			if (currentTimeSlot) {
-				missingTimeSlots.push(currentTimeSlot);
-				currentTimeSlot = undefined;
-			}
-		}
-	}
-	if (currentTimeSlot) {
-		missingTimeSlots.push(currentTimeSlot);
-	}
-	return missingTimeSlots;
-}
+// 					await this.livingPowerStore.client.setExternalResistorValue(
+// 						this.arduinoSerialNumber,
+// 						startTime * 1000,
+// 						endTime * 1000,
+// 						ohms,
+// 						actionHash,
+// 					);
+// 				}
+// 				this.requestUpdate();
+// 			}}
+// 			.errorMessage=${this.formErrorTo(sortedValues, i)}
+// 		>
+// 		</vaadin-date-time-picker>
+
+// 		<sl-input
+// 			type="number"
+// 			step="1"
+// 			min="1"
+// 			.placeholder=${(timeSlot as MissingResistorsValueTimeSlot)
+// 				.measurementCount
+// 				? msg('Missing')
+// 				: ''}
+// 			.value=${(timeSlot as ExternalResistorValue)
+// 				.external_resistor_value_ohms
+// 				? (timeSlot as ExternalResistorValue)
+// 						.external_resistor_value_ohms
+// 				: ''}
+// 			style="width: 10em"
+// 			@sl-input=${async (e: CustomEvent) => {
+// 				const value = (e.target as SlInput).value;
+// 				const ohms = parseInt(value);
+
+// 				const actionHash = (
+// 					timeSlot as ExternalResistorValue & {
+// 						create_link_action_hash: ActionHash;
+// 					}
+// 				).create_link_action_hash;
+// 				const startTime = new Date(
+// 					`${
+// 						(
+// 							this.shadowRoot!.getElementById(
+// 								`from-${i}`,
+// 							) as DateTimePicker
+// 						).value
+// 					}Z`,
+// 				).valueOf();
+// 				const endTime = new Date(
+// 					`${
+// 						(
+// 							this.shadowRoot!.getElementById(
+// 								`to-${i}`,
+// 							) as DateTimePicker
+// 						).value
+// 					}Z`,
+// 				).valueOf();
+
+// 				if (this.formError(sortedValues, i) === undefined) {
+// 					await this.livingPowerStore.client.setExternalResistorValue(
+// 						this.arduinoSerialNumber,
+// 						startTime * 1000,
+// 						endTime * 1000,
+// 						ohms,
+// 						actionHash,
+// 					);
+// 				}
+// 			}}
+// 		>
+// 			${(timeSlot as ExternalResistorValue)
+// 				.external_resistor_value_ohms
+// 				? html` <span slot="suffix">${msg('Ohms')}</span> `
+// 				: html``}
+// 		</sl-input>
+
+// 		${(timeSlot as MissingResistorsValueTimeSlot).measurementCount
+// 			? html`
+// 					<span class="placeholder"
+// 						>${(timeSlot as MissingResistorsValueTimeSlot)
+// 							.measurementCount === 1
+// 							? msg(
+// 									str`${(timeSlot as MissingResistorsValueTimeSlot).measurementCount} measurement`,
+// 								)
+// 							: msg(
+// 									str`${(timeSlot as MissingResistorsValueTimeSlot).measurementCount} measurements`,
+// 								)}</span
+// 					>
+// 				`
+// 			: html``}
+// 		${this.formError(sortedValues, i)
+// 			? html`<sl-icon
+// 					.src=${wrapPathInSvg(mdiAlertCircle)}
+// 					style="color: red; font-size: 24px"
+// 				></sl-icon>`
+// 			: html``}
+// 	</div>
+// `,
 
 @customElement('external-resistors-values')
 export class ExternalResistorsValues extends SignalWatcher(LitElement) {
@@ -107,27 +242,14 @@ export class ExternalResistorsValues extends SignalWatcher(LitElement) {
 			...measurementsCollections.map(m => m.entry.measurements),
 		);
 
-		const missingTimeSlots = missingResistorValuesTimeSlots(
-			allMeasurements,
-			externalResistorsValues.map(([_, value]) => value),
-		);
-		const aggregated = (
-			missingTimeSlots as Array<
-				| MissingResistorsValueTimeSlot
-				| (ExternalResistorValue & { create_link_action_hash: ActionHash })
-			>
-		).concat(
-			externalResistorsValues.map(([h, v]) => ({
-				...v,
-				create_link_action_hash: h,
-			})),
-		);
-
-		const sortedValues = aggregated.sort((a, b) => a.from - b.from);
-
 		return html`<sl-card style="flex: 1"
 			><div class="column" style="gap: 24px; flex: 1">
-				${sortedValues.length === 0
+				<span
+					>${msg(
+						'Enter here the values of the external resistor for each of the time slots for which there are measurements.',
+					)}</span
+				>
+				${allMeasurements.length === 0
 					? html`
 							<div
 								class="column"
@@ -143,164 +265,30 @@ export class ExternalResistorsValues extends SignalWatcher(LitElement) {
 								>
 							</div>
 						`
-					: sortedValues.map(
-							(timeSlot, i) => html`
-								<div class="row" style="gap: 12px; align-items: center">
-									<vaadin-date-time-picker
-										id="from-${i}"
-										.value=${new Date(timeSlot.from / 1000)
-											.toISOString()
-											.slice(0, 23)}
-										step="1"
-										@change=${async (event: DateTimePickerChangeEvent) => {
-											const startTime = new Date(
-												`${event.target.value}Z`,
-											).valueOf();
-											const endTime = new Date(
-												`${
-													(
-														this.shadowRoot!.getElementById(
-															`to-${i}`,
-														) as DateTimePicker
-													).value
-												}Z`,
-											).valueOf();
-
-											const ohms = (timeSlot as ExternalResistorValue)
-												.external_resistor_value_ohms;
-											if (ohms && startTime < endTime) {
-												const actionHash = (
-													timeSlot as ExternalResistorValue & {
-														create_link_action_hash: ActionHash;
-													}
-												).create_link_action_hash;
-
-												await this.livingPowerStore.client.setExternalResistorValue(
-													this.arduinoSerialNumber,
-													startTime * 1000,
-													endTime * 1000,
-													ohms,
-													actionHash,
-												);
-											}
-										}}
-									>
-									</vaadin-date-time-picker>
-									<span>${msg('to')}</span>
-									<vaadin-date-time-picker
-										id="to-${i}"
-										.value=${new Date(timeSlot.to / 1000)
-											.toISOString()
-											.slice(0, 23)}
-										step="1"
-										@change=${async (event: DateTimePickerChangeEvent) => {
-											const startTime = new Date(
-												`${
-													(
-														this.shadowRoot!.getElementById(
-															`from-${i}`,
-														) as DateTimePicker
-													).value
-												}Z`,
-											).valueOf();
-											const endTime = new Date(
-												`${event.target.value}Z`,
-											).valueOf();
-
-											const ohms = (timeSlot as ExternalResistorValue)
-												.external_resistor_value_ohms;
-											if (ohms && startTime < endTime) {
-												const actionHash = (
-													timeSlot as ExternalResistorValue & {
-														create_link_action_hash: ActionHash;
-													}
-												).create_link_action_hash;
-
-												await this.livingPowerStore.client.setExternalResistorValue(
-													this.arduinoSerialNumber,
-													startTime * 1000,
-													endTime * 1000,
-													ohms,
-													actionHash,
-												);
-											}
-										}}
-									>
-									</vaadin-date-time-picker>
-
-									<sl-input
-										type="number"
-										step="1"
-										min="1"
-										.placeholder=${(timeSlot as MissingResistorsValueTimeSlot)
-											.measurementCount
-											? msg('Missing')
-											: ''}
-										.value=${(timeSlot as ExternalResistorValue)
-											.external_resistor_value_ohms
-											? (timeSlot as ExternalResistorValue)
-													.external_resistor_value_ohms
-											: ''}
-										style="width: 10em"
-										@sl-input=${async (e: CustomEvent) => {
-											const value = (e.target as SlInput).value;
-											const ohms = parseInt(value);
-
-											const actionHash = (
-												timeSlot as ExternalResistorValue & {
-													create_link_action_hash: ActionHash;
-												}
-											).create_link_action_hash;
-											const startTime = new Date(
-												`${
-													(
-														this.shadowRoot!.getElementById(
-															`from-${i}`,
-														) as DateTimePicker
-													).value
-												}Z`,
-											).valueOf();
-											const endTime = new Date(
-												`${
-													(
-														this.shadowRoot!.getElementById(
-															`to-${i}`,
-														) as DateTimePicker
-													).value
-												}Z`,
-											).valueOf();
-											console.log(startTime, endTime, timeSlot);
-
-											await this.livingPowerStore.client.setExternalResistorValue(
-												this.arduinoSerialNumber,
-												startTime * 1000,
-												endTime * 1000,
-												ohms,
-												actionHash,
-											);
-										}}
-									>
-										${(timeSlot as ExternalResistorValue)
-											.external_resistor_value_ohms
-											? html` <span slot="suffix">${msg('Ohms')}</span> `
-											: html`<sl-icon
-													.src=${wrapPathInSvg(mdiAlert)}
-													slot="prefix"
-												></sl-icon>`}
-									</sl-input>
-
-									${(timeSlot as MissingResistorsValueTimeSlot).measurementCount
-										? html`
-												<span class="placeholder"
-													>${msg(
-														str`${(timeSlot as MissingResistorsValueTimeSlot).measurementCount} measurements`,
-													)}</span
-												>
-											`
-										: html``}
-								</div>
-							`,
-						)}
+					: html`
+							<external-resistors-values-form
+								.measurements=${allMeasurements}
+								.externalResistorsValues=${externalResistorsValues.map(
+									([_, v]) => v,
+								)}
+								@set-external-resistor-value=${async (e: CustomEvent) => {
+									const actionHash =
+										e.detail.existingExternalResistorValueToEdit !== undefined
+											? externalResistorsValues[
+													e.detail.existingExternalResistorValueToEdit
+												][0]
+											: undefined;
+									await this.livingPowerStore.client.setExternalResistorValue(
+										this.arduinoSerialNumber,
+										e.detail.from,
+										e.detail.to,
+										e.detail.externalResistorValue,
+										actionHash,
+									);
+								}}
+							>
+							</external-resistors-values-form>
+						`}
 			</div>
 		</sl-card>`;
 	}

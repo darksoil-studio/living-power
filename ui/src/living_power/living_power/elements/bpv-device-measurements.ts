@@ -70,7 +70,7 @@ export function measurementCollectionToChartMeasurements(
 				)
 				.map(m => {
 					const externalResistor = externalResistorsValues.find(
-						er => er.from >= m.timestamp && er.to <= m.timestamp,
+						er => er.from <= m.timestamp && m.timestamp <= er.to,
 					);
 					const intensity_micro_amperes = externalResistor
 						? m.voltage_millivolts /

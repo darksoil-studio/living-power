@@ -30,20 +30,17 @@ import {
 	collectMeasurementsFromSdcard,
 } from '../../../arduinos/collect-measurements.js';
 import { SerialPortInfo } from '../../../arduinos/connected-arduinos.js';
+import { showDialog } from '../../../utils.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
 import { Measurement, MeasurementCollection } from '../types.js';
+import './enter-new-resistors-values-dialog.js';
+import { EnterNewResistorsValuesDialog } from './enter-new-resistors-values-dialog.js';
 
 @customElement('collect-measurements-alert')
 export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 	@state()
 	collecting = false;
-
-	@state()
-	committing = false;
-
-	@state()
-	measurements!: Array<Measurement>;
 
 	/**
 	 * @internal
@@ -58,13 +55,13 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 	) {
 		this.collecting = true;
 		try {
-			const measurements = await collectMeasurements(serialPortInfo.port_name);
-			await this.createMeasurementCollection(arduinoSerialNumber, measurements);
-			// (
-			// 	this.shadowRoot?.getElementById(
-			// 		`save-measurement-dialog-${arduinoSerialNumber}`,
-			// 	) as SlDialog
-			// ).show();
+			const newMeasurements = await collectMeasurements(
+				serialPortInfo.port_name,
+			);
+			await this.createMeasurementCollection(
+				arduinoSerialNumber,
+				newMeasurements,
+			);
 		} catch (e) {
 			console.error(e);
 			notifyError(msg('Error synchronizing the data.'));
@@ -93,6 +90,13 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 					measurementCollectionsHashes: actionHashes,
 				},
 			}),
+		);
+
+		showDialog(
+			html` <enter-new-resistors-values-dialog
+				.arduinoSerialNumber=${arduinoSerialNumber}
+				.newMeasurements=${measurements}
+			></enter-new-resistors-values-dialog>`,
 		);
 		// try {
 		// 	this.committing = true;
@@ -327,48 +331,6 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 				arduinoSerialNumber,
 			)}
 			${this.renderSdcardAlert(measurements.value, arduinoSerialNumber)}
-			<sl-dialog
-				.label=${msg('New Measurements Collected')}
-				id="save-measurement-dialog-${arduinoSerialNumber}"
-			>
-				<div class="column" style="gap: 12px">
-					<span
-						>${msg(
-							'New measurements were found for this BPV device. Please type below the Ohms for the external resistor for the new measurements:',
-						)}</span
-					>
-					<sl-input
-						type="number"
-						.label=${msg('External Resistor (Ohms)')}
-						id="external-resistor-ohms-${arduinoSerialNumber}"
-						@input=${() => this.requestUpdate()}
-					></sl-input>
-				</div>
-
-				<sl-button
-					slot="footer"
-					.disabled=${this.committing ||
-					(
-						this.shadowRoot?.getElementById(
-							`external-resistor-ohms-${arduinoSerialNumber}`,
-						) as SlInput
-					)?.value === ''}
-					.loading=${this.committing}
-					variant="primary"
-					@click=${() =>
-						this.createMeasurementCollection(
-							arduinoSerialNumber,
-							parseInt(
-								(
-									this.shadowRoot?.getElementById(
-										`external-resistor-ohms-${arduinoSerialNumber}`,
-									) as SlInput
-								).value,
-							),
-						)}
-					>${msg('Save Measurements')}</sl-button
-				>
-			</sl-dialog>
 		`;
 	}
 

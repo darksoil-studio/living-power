@@ -195,7 +195,7 @@ export class HomePage extends SignalWatcher(LitElement) {
 
 		if (pathname.includes('external-resistors-values')) {
 			return html`
-				<div class="row" style="align-items: center; ">
+				<div class="row" style="align-items: center; gap: 12px">
 					<sl-icon-button
 						style="color: white"
 						.src=${wrapPathInSvg(mdiArrowLeft)}

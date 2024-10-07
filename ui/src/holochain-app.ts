@@ -136,6 +136,7 @@ export class HolochainApp extends SignalWatcher(LitElement) {
 		return html`
 			${this.renderContent()}
 			<automatic-update-dialog> </automatic-update-dialog>
+			<slot></slot>
 		`;
 	}
 
