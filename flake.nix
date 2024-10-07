@@ -91,7 +91,7 @@
               pnpmDeps = inputs'.pnpmnixpkgs.legacyPackages.pnpm.fetchDeps {
                 inherit (finalAttrs) pnpmWorkspace version pname src;
 
-                hash = "sha256-VzR0Wqs5sNZ1Atd0mcb+cdZpLoUo2qo9HK26H+YZAuY=";
+                hash = "sha256-vBtvE4+jpjcPL8JMTJP9aIinnSN2a1CpfhB256BVjvk=";
               };
               buildPhase = ''
                 runHook preBuild
