@@ -24,7 +24,7 @@ export interface MissingResistorsValueTimeSlot {
 export function missingResistorValuesTimeSlots(
 	measurements: Measurement[],
 	externalResistorsValues: Array<ExternalResistorValue>,
-	customMissingTimeSlots: Array<MissingResistorsValueTimeSlot>,
+	customMissingTimeSlot: MissingResistorsValueTimeSlot | undefined,
 ): Array<MissingResistorsValueTimeSlot> {
 	const missingResistorMeasurements = measurements
 		.filter(
@@ -35,8 +35,10 @@ export function missingResistorValuesTimeSlots(
 		)
 		.filter(
 			m =>
-				!customMissingTimeSlots.find(
-					ts => ts.from <= m.timestamp && m.timestamp <= ts.to,
+				!customMissingTimeSlot ||
+				!(
+					customMissingTimeSlot.from <= m.timestamp &&
+					m.timestamp <= customMissingTimeSlot.to
 				),
 		);
 
@@ -60,11 +62,15 @@ export function missingResistorValuesTimeSlots(
 			})),
 		)
 		.concat(
-			customMissingTimeSlots.map(erv => ({
-				type: 'custom-missing-time-slot' as const,
-				timestamp: erv.from,
-				to: erv.to,
-			})),
+			customMissingTimeSlot
+				? [
+						{
+							type: 'custom-missing-time-slot' as const,
+							timestamp: customMissingTimeSlot.from,
+							to: customMissingTimeSlot.to,
+						},
+					]
+				: [],
 		)
 		.sort((a, b) => a.timestamp - b.timestamp);
 
@@ -119,13 +125,13 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 	measurements!: Array<Measurement>;
 
 	@property()
-	customMissingTimeSlots: Array<MissingResistorsValueTimeSlot> = [];
+	customMissingTimeSlot: MissingResistorsValueTimeSlot | undefined;
 
 	get valid() {
 		const missingTimeSlots = missingResistorValuesTimeSlots(
 			this.measurements,
 			this.externalResistorsValues,
-			this.customMissingTimeSlots,
+			this.customMissingTimeSlot,
 		);
 		const aggregated = (
 			missingTimeSlots as Array<
@@ -315,24 +321,10 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 						if (this.formError(allTimeSlots, i) === undefined) {
 							const from = startTime * 1000;
 							const to = endTime * 1000;
-							this.customMissingTimeSlots = this.customMissingTimeSlots.filter(
-								slot => slot.from !== timeSlot.from,
-							);
-							for (let i = 0; i < this.customMissingTimeSlots.length; i++) {
-								if (from < this.customMissingTimeSlots[i].to) {
-									this.customMissingTimeSlots[i].to = from;
-								}
-								if (this.customMissingTimeSlots[i].from < to) {
-									this.customMissingTimeSlots[i].from = to;
-								}
-							}
-							this.customMissingTimeSlots = [
-								...this.customMissingTimeSlots,
-								{
-									from,
-									to,
-								},
-							];
+							this.customMissingTimeSlot = {
+								from,
+								to,
+							};
 						}
 					}
 					this.requestUpdate();
@@ -379,24 +371,10 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 					} else {
 						const from = startTime * 1000;
 						const to = endTime * 1000;
-						this.customMissingTimeSlots = this.customMissingTimeSlots.filter(
-							slot => slot.from !== timeSlot.from,
-						);
-						for (let i = 0; i < this.customMissingTimeSlots.length; i++) {
-							if (from < this.customMissingTimeSlots[i].to) {
-								this.customMissingTimeSlots[i].to = from;
-							}
-							if (this.customMissingTimeSlots[i].from < to) {
-								this.customMissingTimeSlots[i].from = to;
-							}
-						}
-						this.customMissingTimeSlots = [
-							...this.customMissingTimeSlots,
-							{
-								from,
-								to,
-							},
-						];
+						this.customMissingTimeSlot = {
+							from,
+							to,
+						};
 					}
 					setTimeout(() => {
 						this.requestUpdate();
@@ -431,9 +409,7 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 					).valueOf();
 
 					if (this.formError(allTimeSlots, i) === undefined) {
-						this.customMissingTimeSlots = this.customMissingTimeSlots.filter(
-							slot => slot.from !== timeSlot.from,
-						);
+						this.customMissingTimeSlot = undefined;
 						this.dispatchEvent(
 							new CustomEvent('set-external-resistor-value', {
 								bubbles: true,
@@ -477,7 +453,7 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 		const missingTimeSlots = missingResistorValuesTimeSlots(
 			this.measurements,
 			this.externalResistorsValues,
-			this.customMissingTimeSlots,
+			this.customMissingTimeSlot,
 		);
 		const aggregated = (
 			missingTimeSlots as Array<
