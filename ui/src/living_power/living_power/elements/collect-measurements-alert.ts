@@ -77,6 +77,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			arduino_serial_number: arduinoSerialNumber,
 			measurements: measurements!,
 		};
+		console.log(measurements);
 		const actionHashes =
 			await this._livingPowerStore.client.createMeasurementCollection(
 				measurementCollection,
@@ -254,20 +255,14 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 				</sl-alert>
 			`;
 
-		const measurementsByTimestampDescending = measurements.sort(
-			(m1, m2) => m2.timestamp - m1.timestamp,
+		const newMeasurements = sdcardMeasurements.value.filter(
+			m => !measurements.find(m2 => m2.timestamp === m.timestamp),
 		);
-		const newMeasurementsByTimestampDescending = sdcardMeasurements.value.sort(
+		const newMeasurementsByTimestampDescending = newMeasurements.sort(
 			(m1, m2) => m2.timestamp - m1.timestamp,
 		);
 
-		if (
-			newMeasurementsByTimestampDescending.length === 0 ||
-			(measurementsByTimestampDescending.length !== 0 &&
-				newMeasurementsByTimestampDescending[0].timestamp <=
-					measurementsByTimestampDescending[0].timestamp)
-		)
-			return html``;
+		if (newMeasurementsByTimestampDescending.length === 0) return html``;
 
 		return html`
 			<sl-alert open>
@@ -297,7 +292,7 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 							try {
 								await this.createMeasurementCollection(
 									arduinoSerialNumber,
-									sdcardMeasurements.value,
+									newMeasurementsByTimestampDescending,
 								);
 								// (
 								// 	this.shadowRoot?.getElementById(

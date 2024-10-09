@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime, TimeZone};
 use holochain_types::prelude::Timestamp;
 use living_power_integrity::measurement_collection::Measurement;
 use once_cell::sync::Lazy;
@@ -144,7 +144,13 @@ fn line_to_measurement(line: &str) -> anyhow::Result<Measurement> {
         caps["seconds"].parse()?,
     )
     .unwrap();
-    let timestamp = Timestamp::from_micros(date_time.and_utc().timestamp_micros());
+    let timestamp = Timestamp::from_micros(
+        Local
+            .from_local_datetime(&date_time)
+            .single()
+            .expect("Can't convert DateTime to local timezone")
+            .timestamp_micros(),
+    );
 
     let temperature: f32 = caps["temperature"].parse()?;
     let humidity: f32 = caps["humidity"].parse()?;

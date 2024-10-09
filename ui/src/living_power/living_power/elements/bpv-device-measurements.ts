@@ -4,7 +4,12 @@ import {
 	wrapPathInSvg,
 } from '@holochain-open-dev/elements';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
-import { SignalWatcher, joinAsync } from '@holochain-open-dev/signals';
+import {
+	AsyncComputed,
+	SignalWatcher,
+	joinAsync,
+	toPromise,
+} from '@holochain-open-dev/signals';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { ActionHash, EntryHash, Record } from '@holochain/client';
 import { consume } from '@lit/context';
@@ -37,6 +42,7 @@ import { ref } from 'lit/directives/ref.js';
 
 import { appStyles } from '../../../app-styles.js';
 import '../../../chartjs-chart.js';
+import { getISOLocalString } from '../../../utils.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
 import {
@@ -51,7 +57,8 @@ export interface ChartMeasurement extends Measurement {
 	power_micro_watts: number | undefined;
 }
 
-const MILLIS_IN_AN_HOUR = 1000 * 60 * 60;
+const MILLIS_IN_A_MINUTE = 1000 * 60;
+const MILLIS_IN_AN_HOUR = MILLIS_IN_A_MINUTE * 60;
 const MILLIS_IN_A_DAY = MILLIS_IN_AN_HOUR * 24;
 const MILLIS_IN_A_WEEK = MILLIS_IN_A_DAY * 7;
 const MILLIS_IN_A_MONTH = MILLIS_IN_A_DAY * 30;
@@ -62,34 +69,37 @@ export function measurementCollectionToChartMeasurements(
 	startTime: number,
 	endTime: number,
 ): ChartMeasurement[] {
-	return ([] as ChartMeasurement[]).concat(
-		...measurementCollections.map(mc =>
-			mc.measurements
-				.filter(
-					m => m.timestamp / 1000 <= endTime && m.timestamp / 1000 >= startTime,
-				)
-				.map(m => {
-					const externalResistor = externalResistorsValues.find(
-						er => er.from <= m.timestamp && m.timestamp <= er.to,
-					);
-					const intensity_micro_amperes = externalResistor
-						? m.voltage_millivolts /
-							1000 /
-							externalResistor.external_resistor_value_ohms
-						: undefined;
-					const power_micro_watts = intensity_micro_amperes
-						? (intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000
-						: undefined;
-					return {
-						...m,
-						external_resistor_ohms:
-							externalResistor?.external_resistor_value_ohms,
-						intensity_micro_amperes,
-						power_micro_watts,
-					};
-				}),
-		),
-	);
+	return ([] as ChartMeasurement[])
+		.concat(
+			...measurementCollections.map(mc =>
+				mc.measurements
+					// .filter(
+					// 	m =>
+					// 		m.timestamp / 1000 <= endTime && m.timestamp / 1000 >= startTime,
+					// )
+					.map(m => {
+						const externalResistor = externalResistorsValues.find(
+							er => er.from <= m.timestamp && m.timestamp <= er.to,
+						);
+						const intensity_micro_amperes = externalResistor
+							? m.voltage_millivolts /
+								1000 /
+								externalResistor.external_resistor_value_ohms
+							: undefined;
+						const power_micro_watts = intensity_micro_amperes
+							? (intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000
+							: undefined;
+						return {
+							...m,
+							external_resistor_ohms:
+								externalResistor?.external_resistor_value_ohms,
+							intensity_micro_amperes,
+							power_micro_watts,
+						};
+					}),
+			),
+		)
+		.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 export function chartData(
@@ -193,60 +203,67 @@ export function chartData(
 	};
 }
 
-export const chartOptions: ChartOptions<'line'> = {
-	scales: {
-		x: {
-			type: 'time',
-			time: {
-				// Luxon format string
-				// unit: 'second',
-				displayFormats: {
-					millisecond: 'HH:MM',
+export function chartOptions(
+	startTime: number,
+	endTime: number,
+): ChartOptions<'line'> {
+	return {
+		scales: {
+			x: {
+				min: startTime,
+				max: endTime,
+				type: 'time',
+				time: {
+					// Luxon format string
+					// unit: 'second',
+					displayFormats: {
+						millisecond: 'HH:MM',
+					},
+				},
+				title: {
+					display: true,
+					text: 'Date',
 				},
 			},
-			title: {
+			voltage: {},
+			intensity: {
+				display: false,
+			},
+			power: {
+				display: false,
+			},
+			temperature: {
+				display: false,
+				// title: {
+				// 	display: true,
+				// 	text: 'ºC',
+				// },
+				position: 'right',
+			},
+			lightlevel: {
+				display: false,
+				// title: {
+				// 	display: true,
+				// 	text: 'ºC',
+				// },
+				position: 'right',
+			},
+			humidity: {
+				display: false,
+				// title: {
+				// 	display: true,
+				// 	text: msg("Humidity"),
+				// },
+				position: 'right',
+			},
+			resistor: {
+				// type: '',
 				display: true,
-				text: 'Date',
+				position: 'right',
 			},
 		},
-		voltage: {},
-		intensity: {
-			display: false,
-		},
-		power: {
-			display: false,
-		},
-		temperature: {
-			display: false,
-			// title: {
-			// 	display: true,
-			// 	text: 'ºC',
-			// },
-			position: 'right',
-		},
-		lightlevel: {
-			display: false,
-			// title: {
-			// 	display: true,
-			// 	text: 'ºC',
-			// },
-			position: 'right',
-		},
-		humidity: {
-			display: false,
-			// title: {
-			// 	display: true,
-			// 	text: msg("Humidity"),
-			// },
-			position: 'right',
-		},
-		resistor: {
-			// type: '',
-			display: true,
-			position: 'right',
-		},
-	},
-};
+	};
+}
 
 export function intensityVoltageChartData(
 	measurementCollections: Array<MeasurementCollection>,
@@ -309,7 +326,7 @@ type TimeFilter = 'last_day' | 'last_week' | 'last_month' | 'all_time';
  */
 @localized()
 @customElement('bpv-device-measurements')
-export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
+export class BpvDeviceMeasurements extends SignalWatcher(LitElement) {
 	/**
 	 * REQUIRED. The hash of the BpvDevice to show
 	 */
@@ -329,7 +346,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 		return html`
 			<div class="tab-content">
 				<line-chart
-					.options=${chartOptions}
+					.options=${chartOptions(this.startTime, this.endTime)}
 					.data=${chartData(
 						measurementsCollections.map(r => r.entry),
 						externalResistors,
@@ -368,6 +385,36 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 
 	@state()
 	endTime: number = Date.now();
+
+	async firstUpdated() {
+		const result = await toPromise(
+			new AsyncComputed(() => this.allMeasurementsAndResistors()),
+		);
+		if (result.measurements.length > 0) {
+			this.startTime = Date.now();
+			this.endTime = 0;
+			for (const measurementCollection of result.measurements) {
+				for (const measurement of measurementCollection.entry.measurements) {
+					if (
+						this.startTime >
+						measurement.timestamp / 1000 - MILLIS_IN_AN_HOUR
+					) {
+						this.startTime = measurement.timestamp / 1000 - MILLIS_IN_AN_HOUR;
+					}
+					if (this.endTime < measurement.timestamp / 1000 + MILLIS_IN_AN_HOUR) {
+						this.endTime = measurement.timestamp / 1000 + MILLIS_IN_AN_HOUR;
+					}
+				}
+			}
+
+			if (this.endTime - this.startTime < 60 * 1000) {
+				this.endTime = this.startTime + 60 * 1000;
+			}
+		} else {
+			this.startTime = Date.now() - MILLIS_IN_A_WEEK;
+			this.endTime = Date.now();
+		}
+	}
 
 	renderMeasurements(
 		measurementsCollections: Array<EntryRecord<MeasurementCollection>>,
@@ -453,9 +500,7 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										style="align-items: center; margin-right: 4px; gap: 12px"
 									>
 										<vaadin-date-time-picker
-											.value=${`${new Date(this.startTime)
-												.toISOString()
-												.slice(0, 16)}Z`}
+											.value=${getISOLocalString(new Date(this.startTime))}
 											@change="${(event: DateTimePickerChangeEvent) => {
 												this.startTime = new Date(event.target.value).valueOf();
 												if (this.startTime > this.endTime) {
@@ -473,12 +518,8 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										></vaadin-date-time-picker>
 										<span>${msg('to')}</span>
 										<vaadin-date-time-picker
-											.value=${`${new Date(this.endTime)
-												.toISOString()
-												.slice(0, 16)}Z`}
-											.min=${new Date(this.startTime)
-												.toISOString()
-												.slice(0, 16)}
+											.value=${getISOLocalString(new Date(this.endTime))}
+											.min=${getISOLocalString(new Date(this.startTime))}
 											@change="${(event: DateTimePickerChangeEvent) => {
 												this.endTime = new Date(event.target.value).valueOf();
 											}}"

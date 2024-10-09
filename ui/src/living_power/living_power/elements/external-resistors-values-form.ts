@@ -14,6 +14,7 @@ import { keyed } from 'lit/directives/keyed.js';
 import { live } from 'lit/directives/live.js';
 
 import { appStyles } from '../../../app-styles';
+import { getISOLocalString } from '../../../utils';
 import { ExternalResistorValue, Measurement } from '../types';
 
 export interface MissingResistorsValueTimeSlot {
@@ -210,8 +211,8 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 		if (!fromPicker || !toPicker) return undefined;
 		try {
 			if (fromPicker.value === '') return msg('Invalid Date.');
-			const startTime = new Date(`${fromPicker.value}Z`).valueOf();
-			const endTime = new Date(`${toPicker.value}Z`).valueOf();
+			const startTime = new Date(fromPicker.value).valueOf();
+			const endTime = new Date(toPicker.value).valueOf();
 
 			if (endTime < startTime) return msg('Start time is after end time.');
 
@@ -240,7 +241,7 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 		if (!toPicker) return undefined;
 		if (toPicker.value === '') return msg('Invalid Date.');
 		try {
-			const endTime = new Date(`${toPicker.value}Z`).valueOf();
+			const endTime = new Date(toPicker.value).valueOf();
 
 			if (index < allTimeSlots.length - 1) {
 				const toMax = this.toMaxDate(allTimeSlots, index);
@@ -281,21 +282,17 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 		return html` <div class="row" style="gap: 12px; align-items: center">
 			<vaadin-date-time-picker
 				style="height: 48px; width: 16em"
-				.value=${live(
-					new Date(timeSlot.from / 1000).toISOString().slice(0, 23),
-				)}
+				.value=${live(getISOLocalString(new Date(timeSlot.from / 1000)))}
 				.min=${this.fromMinDate(allTimeSlots, i)
-					? new Date(this.fromMinDate(allTimeSlots, i)! / 1000)
-							.toISOString()
-							.slice(0, 23)
+					? getISOLocalString(
+							new Date(this.fromMinDate(allTimeSlots, i)! / 1000),
+						)
 					: ''}
 				.max=${this.toDateTimePicker(i)?.value}
 				step="1"
 				@change=${async (event: DateTimePickerChangeEvent) => {
-					const startTime = new Date(`${event.target.value}Z`).valueOf();
-					const endTime = new Date(
-						`${this.toDateTimePicker(i).value}Z`,
-					).valueOf();
+					const startTime = new Date(event.target.value).valueOf();
+					const endTime = new Date(this.toDateTimePicker(i).value).valueOf();
 
 					const ohms = (timeSlot as ExternalResistorValue)
 						.external_resistor_value_ohms;
@@ -335,19 +332,17 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 			<span>${msg('to')}</span>
 			<vaadin-date-time-picker
 				style="height: 48px; width: 16em"
-				.value=${live(new Date(timeSlot.to / 1000).toISOString().slice(0, 23))}
+				.value=${live(getISOLocalString(new Date(timeSlot.to / 1000)))}
 				step="1"
 				.min=${this.fromDateTimePicker(i)?.value}
 				.max=${this.toMaxDate(allTimeSlots, i)
-					? new Date(this.toMaxDate(allTimeSlots, i)! / 1000)
-							.toISOString()
-							.slice(0, 23)
+					? getISOLocalString(new Date(this.toMaxDate(allTimeSlots, i)! / 1000))
 					: ''}
 				@change=${async (event: DateTimePickerChangeEvent) => {
 					const startTime = new Date(
-						`${this.fromDateTimePicker(i).value}Z`,
+						this.fromDateTimePicker(i).value,
 					).valueOf();
-					const endTime = new Date(`${event.target.value}Z`).valueOf();
+					const endTime = new Date(event.target.value).valueOf();
 
 					const ohms = (timeSlot as ExternalResistorValue)
 						.external_resistor_value_ohms;
@@ -402,11 +397,9 @@ export class ExternalResistorsValuesForm extends SignalWatcher(LitElement) {
 					const ohms = parseInt(value);
 
 					const startTime = new Date(
-						`${this.fromDateTimePicker(i).value}Z`,
+						this.fromDateTimePicker(i).value,
 					).valueOf();
-					const endTime = new Date(
-						`${this.toDateTimePicker(i).value}Z`,
-					).valueOf();
+					const endTime = new Date(this.toDateTimePicker(i).value).valueOf();
 
 					if (this.formError(allTimeSlots, i) === undefined) {
 						this.customMissingTimeSlot = undefined;
