@@ -5,16 +5,16 @@ use crate::bpv_device::bpv_device_hash;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SetExternalResistorValueInput {
-    arduino_serial_number: String,
-    previous_create_link_action_hash: Option<ActionHash>,
-    external_resistor_value: ExternalResistorValue,
+    pub arduino_serial_number: String,
+    pub previous_create_link_action_hash: Option<ActionHash>,
+    pub external_resistor_value: ExternalResistorValue,
 }
 
-#[derive(Serialize, Deserialize, Debug, SerializedBytes)]
+#[derive(Serialize, PartialEq, Eq, Deserialize, Debug, SerializedBytes)]
 pub struct ExternalResistorValue {
-    external_resistor_value_ohms: u64,
-    from: Timestamp,
-    to: Timestamp,
+    pub external_resistor_value_ohms: u64,
+    pub from: Timestamp,
+    pub to: Timestamp,
 }
 
 #[hdk_extern]

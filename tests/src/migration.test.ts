@@ -24,8 +24,10 @@ test('migrate from the previous happ to the new version, assert that the data is
 		let collectionOutput = await toPromise(bob.store.allBpvDevices);
 		assert.equal(collectionOutput.size, 0);
 
+		const arduinoSerialNumber = 'someserialnumber';
+
 		// Alice adds a BpvDevice
-		await alice.store.client.setBpvDeviceInfo('someserialnumber', {
+		await alice.store.client.setBpvDeviceInfo(arduinoSerialNumber, {
 			name: 'alicesdevice',
 		});
 
@@ -34,7 +36,7 @@ test('migrate from the previous happ to the new version, assert that the data is
 		// Bob gets all bpv devices again
 		collectionOutput = await toPromise(bob.store.allBpvDevices);
 		assert.equal(collectionOutput.size, 1);
-		assert.equal(Array.from(collectionOutput.keys())[0], 'someserialnumber');
+		assert.equal(Array.from(collectionOutput.keys())[0], arduinoSerialNumber);
 		const info = await toPromise(Array.from(collectionOutput.values())[0].info);
 
 		assert.equal(info.name, 'alicesdevice');
@@ -44,6 +46,14 @@ test('migrate from the previous happ to the new version, assert that the data is
 		);
 		await alice.store.client.createMeasurementCollection(
 			await sampleMeasurementCollection(alice.store.client),
+		);
+
+		await alice.store.client.setExternalResistorValue(
+			arduinoSerialNumber,
+			Date.now() - 1000 * 60 * 60,
+			Date.now(),
+			10,
+			undefined,
 		);
 
 		const appInfo = await alice.player.conductor.installApp(
@@ -93,9 +103,14 @@ test('migrate from the previous happ to the new version, assert that the data is
 		assert.equal(info2.name, 'alicesdevice');
 
 		const measurements = await toPromise(
-			aliceStore2.bpvDevices.get('someserialnumber').measurementCollections
+			aliceStore2.bpvDevices.get(arduinoSerialNumber).measurementCollections
 				.live,
 		);
 		assert.equal(measurements.size, 2);
+
+		const externalResistorValues = await toPromise(
+			aliceStore2.bpvDevices.get(arduinoSerialNumber).externalResistorValues,
+		);
+		assert.equal(externalResistorValues.length, 1);
 	});
 });

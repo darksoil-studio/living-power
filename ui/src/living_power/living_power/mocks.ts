@@ -273,7 +273,6 @@ export async function sampleMeasurementCollection(
 					voltage_millivolts: 300,
 				},
 			],
-			external_resistor_ohms: 3,
 		},
 		...partialMeasurementCollection,
 	};

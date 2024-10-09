@@ -453,9 +453,9 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										style="align-items: center; margin-right: 4px; gap: 12px"
 									>
 										<vaadin-date-time-picker
-											.value=${new Date(this.startTime)
+											.value=${`${new Date(this.startTime)
 												.toISOString()
-												.slice(0, 16)}
+												.slice(0, 16)}Z`}
 											@change="${(event: DateTimePickerChangeEvent) => {
 												this.startTime = new Date(event.target.value).valueOf();
 												if (this.startTime > this.endTime) {
@@ -473,9 +473,9 @@ export class BpvDevicemeasurementsDetail extends SignalWatcher(LitElement) {
 										></vaadin-date-time-picker>
 										<span>${msg('to')}</span>
 										<vaadin-date-time-picker
-											.value=${new Date(this.endTime)
+											.value=${`${new Date(this.endTime)
 												.toISOString()
-												.slice(0, 16)}
+												.slice(0, 16)}Z`}
 											.min=${new Date(this.startTime)
 												.toISOString()
 												.slice(0, 16)}

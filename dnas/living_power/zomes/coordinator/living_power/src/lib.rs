@@ -1,3 +1,7 @@
+use external_resistors::{
+    get_all_external_resistor_values, set_external_resistor_value, ExternalResistorValue,
+    SetExternalResistorValueInput,
+};
 use hdk::prelude::*;
 use serde::de::DeserializeOwned;
 
@@ -141,6 +145,43 @@ pub fn migrate_from_old_cell(old_cell: CellId) -> ExternResult<()> {
             let measurement_collection = MeasurementCollection::try_from(entry)?;
 
             create_measurement_collections(measurement_collection)?;
+        }
+        let old_links: Vec<Link> = call_old_cell(
+            old_cell.clone(),
+            "get_all_external_resistor_values",
+            arduino_serial_number.clone(),
+        )?;
+        let new_links: Vec<Link> = get_all_external_resistor_values(arduino_serial_number.clone())?;
+
+        let link_to_external_resistor_value =
+            |link: Link| -> Result<ExternalResistorValue, SerializedBytesError> {
+                let tag = link.tag;
+                let bytes = SerializedBytes::from(UnsafeBytes::from(tag.into_inner()));
+                let value = ExternalResistorValue::try_from(bytes)?;
+                Ok(value)
+            };
+
+        let old_values: Vec<ExternalResistorValue> = old_links
+            .into_iter()
+            .filter_map(|link| link_to_external_resistor_value(link).ok())
+            .collect();
+
+        let new_values: Vec<ExternalResistorValue> = new_links
+            .into_iter()
+            .filter_map(|link| link_to_external_resistor_value(link).ok())
+            .collect();
+
+        let old_unexistant_values: Vec<ExternalResistorValue> = old_values
+            .into_iter()
+            .filter(|value| new_values.iter().find(|v| v.eq(&value)).is_none())
+            .collect();
+
+        for external_resistor_value in old_unexistant_values {
+            set_external_resistor_value(SetExternalResistorValueInput {
+                arduino_serial_number: arduino_serial_number.clone(),
+                previous_create_link_action_hash: None,
+                external_resistor_value,
+            })?;
         }
     }
 

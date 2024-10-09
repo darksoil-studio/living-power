@@ -2,8 +2,8 @@
   "name": "tests",
   "private": true,
   "scripts": {
-    "test": "pnpm build:oldhapp && vitest run",
-    "build:oldhapp": "nix build github:darksoil-studio/living-power/v0.0.2#living_power_happ -o old-living-power.happ"
+    "test": "pnpm build:oldhapp && WASM_LOG=warn vitest run",
+    "build:oldhapp": "nix build github:darksoil-studio/living-power/v0.1.0#living_power_happ -o old-living-power.happ"
   },
   "dependencies": {
     "@holochain-open-dev/signals": "^0.400.0-dev",
