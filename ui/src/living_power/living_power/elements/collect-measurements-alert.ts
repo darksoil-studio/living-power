@@ -77,7 +77,6 @@ export class CollectMeasurementsAlert extends SignalWatcher(LitElement) {
 			arduino_serial_number: arduinoSerialNumber,
 			measurements: measurements!,
 		};
-		console.log(measurements);
 		const actionHashes =
 			await this._livingPowerStore.client.createMeasurementCollection(
 				measurementCollection,

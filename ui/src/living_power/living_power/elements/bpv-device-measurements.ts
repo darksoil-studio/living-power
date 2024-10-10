@@ -42,6 +42,7 @@ import { ref } from 'lit/directives/ref.js';
 
 import { appStyles } from '../../../app-styles.js';
 import '../../../chartjs-chart.js';
+import { LineChart } from '../../../chartjs-chart.js';
 import { getISOLocalString } from '../../../utils.js';
 import { livingPowerStoreContext } from '../context.js';
 import { LivingPowerStore } from '../living-power-store.js';
@@ -66,8 +67,6 @@ const MILLIS_IN_A_MONTH = MILLIS_IN_A_DAY * 30;
 export function measurementCollectionToChartMeasurements(
 	measurementCollections: Array<MeasurementCollection>,
 	externalResistorsValues: Array<ExternalResistorValue>,
-	startTime: number,
-	endTime: number,
 ): ChartMeasurement[] {
 	return ([] as ChartMeasurement[])
 		.concat(
@@ -82,12 +81,12 @@ export function measurementCollectionToChartMeasurements(
 							er => er.from <= m.timestamp && m.timestamp <= er.to,
 						);
 						const intensity_micro_amperes = externalResistor
-							? m.voltage_millivolts /
-								1000 /
-								externalResistor.external_resistor_value_ohms
+							? (m.voltage_millivolts /
+									externalResistor.external_resistor_value_ohms) *
+								1000
 							: undefined;
 						const power_micro_watts = intensity_micro_amperes
-							? (intensity_micro_amperes * (m.voltage_millivolts / 1000)) / 1000
+							? (intensity_micro_amperes * m.voltage_millivolts) / 1000
 							: undefined;
 						return {
 							...m,
@@ -102,22 +101,25 @@ export function measurementCollectionToChartMeasurements(
 		.sort((a, b) => a.timestamp - b.timestamp);
 }
 
+const voltageLabel = msg('Voltage (mV)');
+const lightLevelLabel = msg('Light Level (Lux)');
+const temperatureLabel = msg('Temperature (ºC)');
+const externalResistorLabel = msg('External Resistor (kOhms)');
+const powerLabel = msg('Power (uW)');
+const intensityLabel = msg('Intensity (uA)');
+
 export function chartData(
 	measurementCollections: Array<MeasurementCollection>,
 	externalResistorsValues: Array<ExternalResistorValue>,
-	startTime: number,
-	endTime: number,
 ): ChartData<'line'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
 		externalResistorsValues,
-		startTime,
-		endTime,
 	);
 	return {
 		datasets: [
 			{
-				label: msg('Voltage (mV)'),
+				label: voltageLabel,
 				data: allMeasurements.map(m => ({
 					x: m.timestamp / 1000,
 					y: m.voltage_millivolts / 1000,
@@ -139,7 +141,7 @@ export function chartData(
 			// 	tension: 0.4,
 			// },
 			{
-				label: msg('Light Level (Lux)'),
+				label: lightLevelLabel,
 				data: allMeasurements.map(m => ({
 					x: m.timestamp / 1000,
 					y: m.light_level_lux / 1000,
@@ -150,7 +152,7 @@ export function chartData(
 				tension: 0.4,
 			},
 			{
-				label: msg('Temperature (ºC)'),
+				label: temperatureLabel,
 				data: allMeasurements.map(m => ({
 					x: m.timestamp / 1000,
 					y: m.temperature_celsius / 1000,
@@ -161,7 +163,7 @@ export function chartData(
 				tension: 0.4,
 			},
 			{
-				label: msg('External Resistor (kOhms)'),
+				label: externalResistorLabel,
 				data: allMeasurements
 					.filter(m => m.external_resistor_ohms !== undefined)
 					.map(m => ({
@@ -173,7 +175,7 @@ export function chartData(
 				stepped: true,
 			},
 			{
-				label: msg('Power (uW)'),
+				label: powerLabel,
 				data: allMeasurements
 
 					.filter(m => m.power_micro_watts !== undefined)
@@ -187,7 +189,7 @@ export function chartData(
 				tension: 0.4,
 			},
 			{
-				label: msg('Intensity (uA)'),
+				label: intensityLabel,
 				data: allMeasurements
 					.filter(m => m.intensity_micro_amperes !== undefined)
 					.map(m => ({
@@ -203,7 +205,7 @@ export function chartData(
 	};
 }
 
-export function chartOptions(
+export function initialTimeChartOptions(
 	startTime: number,
 	endTime: number,
 ): ChartOptions<'line'> {
@@ -222,44 +224,88 @@ export function chartOptions(
 				},
 				title: {
 					display: true,
-					text: 'Date',
+					text: msg('Date'),
 				},
 			},
-			voltage: {},
-			intensity: {
-				display: false,
-			},
-			power: {
-				display: false,
-			},
 			temperature: {
-				display: false,
-				// title: {
-				// 	display: true,
-				// 	text: 'ºC',
-				// },
-				position: 'right',
+				// display: false,
+				title: {
+					display: true,
+					text: temperatureLabel,
+				},
 			},
 			lightlevel: {
-				display: false,
+				// display: false,
 				// title: {
 				// 	display: true,
 				// 	text: 'ºC',
 				// },
+				title: {
+					display: true,
+					text: lightLevelLabel,
+				},
+			},
+			intensity: {
+				// display: false,
+				title: {
+					display: true,
+					text: intensityLabel,
+				},
 				position: 'right',
 			},
-			humidity: {
-				display: false,
-				// title: {
-				// 	display: true,
-				// 	text: msg("Humidity"),
-				// },
+			voltage: {
+				title: {
+					display: true,
+					text: voltageLabel,
+				},
 				position: 'right',
 			},
+			power: {
+				// display: false,
+				title: {
+					display: true,
+					text: powerLabel,
+				},
+				position: 'right',
+			},
+			// humidity: {
+			// 	display: false,
+			// 	// title: {
+			// 	// 	display: true,
+			// 	// 	text: msg("Humidity"),
+			// 	// },
+			// },
 			resistor: {
+				title: {
+					display: true,
+					text: externalResistorLabel,
+				},
 				// type: '',
-				display: true,
 				position: 'right',
+			},
+		},
+		plugins: {
+			legend: {
+				onClick(e, legendItem, legend) {
+					const index = legendItem.datasetIndex;
+					const ci = legend.chart;
+
+					const scales = ci.options.scales!;
+					const scale = Object.entries(scales).find(
+						([_, s]) => s?.title?.text === legendItem.text,
+					)!;
+					if (ci.isDatasetVisible(index!)) {
+						ci.hide(index!);
+						legendItem.hidden = true;
+						ci.options.scales![scale[0]]!.display = false;
+					} else {
+						ci.show(index!);
+						legendItem.hidden = false;
+						ci.options.scales![scale[0]]!.display = true;
+					}
+
+					ci.update();
+				},
 			},
 		},
 	};
@@ -268,14 +314,10 @@ export function chartOptions(
 export function intensityVoltageChartData(
 	measurementCollections: Array<MeasurementCollection>,
 	externalResistorsValues: Array<ExternalResistorValue>,
-	startTime: number,
-	endTime: number,
 ): ChartData<'scatter'> {
 	const allMeasurements = measurementCollectionToChartMeasurements(
 		measurementCollections,
 		externalResistorsValues,
-		startTime,
-		endTime,
 	);
 	return {
 		datasets: [
@@ -346,12 +388,22 @@ export class BpvDeviceMeasurements extends SignalWatcher(LitElement) {
 		return html`
 			<div class="tab-content">
 				<line-chart
-					.options=${chartOptions(this.startTime, this.endTime)}
+					id="time-chart"
+					.initialOptions=${initialTimeChartOptions(
+						this.startTime,
+						this.endTime,
+					)}
+					.options=${{
+						scales: {
+							x: {
+								min: this.startTime,
+								max: this.endTime,
+							},
+						},
+					}}
 					.data=${chartData(
 						measurementsCollections.map(r => r.entry),
 						externalResistors,
-						this.startTime,
-						this.endTime,
 					)}
 				></line-chart>
 			</div>
@@ -365,12 +417,10 @@ export class BpvDeviceMeasurements extends SignalWatcher(LitElement) {
 		return html`
 			<div class="tab-content">
 				<scatter-chart
-					.options=${intensityVoltageChartOptions}
+					.initialOptions=${intensityVoltageChartOptions}
 					.data=${intensityVoltageChartData(
 						measurementsCollections.map(r => r.entry),
 						externalResistors,
-						this.startTime,
-						this.endTime,
 					)}
 				></scatter-chart>
 			</div>
