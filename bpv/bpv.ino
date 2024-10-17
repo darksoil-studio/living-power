@@ -35,7 +35,7 @@ const char* ntpServer = "pool.ntp.org";
 const int timeZone = 0; // Adjust for your time zone
 const int NTP_PACKET_SIZE = 48;
 
-
+WiFiUDP udp;
 RTCZero rtc;
 // Declare a variable to store the light level
 float lightLevel;
