@@ -93,5 +93,4 @@ jobs:
         env:
           CACHIX_AUTH_TOKEN: "${{ secrets.DARKSOIL_CACHIX_AUTH_TOKEN }}"
         run: |
-          nix build nixpkgs#jq
           cachix pin darksoil-studio living-power $(nix path-info --json --accept-flake-config --no-warn-dirty .#living-power | jq -r 'keys[0]')

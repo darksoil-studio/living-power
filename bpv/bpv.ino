@@ -1,7 +1,7 @@
 #include <Arduino_MKRENV.h>
 #include <Wire.h>
 #include <SD.h>
-//#include <WiFiNINA.h>
+#include <WiFiNINA.h>
 #include <RTCZero.h>
 #include <ArduinoLowPower.h>
 #include <ArduinoECCX08.h>
@@ -49,22 +49,22 @@ void setup() {
   while(!Serial);
 
   // disable battery charging
-  //if (!PMIC.begin()) {
-  //  Serial.println("Failed to initialize PMIC!");
-  //  while (1);
-  //}
-  //if (!PMIC.disableCharge()) {
-  //    Serial.println("Error disabling Charge mode");
-  //}
+  if (!PMIC.begin()) {
+    Serial.println("Failed to initialize PMIC!");
+    while (1);
+  }
+  if (!PMIC.disableCharge()) {
+      Serial.println("Error disabling Charge mode");
+  }
 
-  //WiFi.end();
+  WiFi.end();
 
   // Connect to Wi-Fi and set RTC
-  //connectToWiFi();
-  //setTimeFromNTP();
+  connectToWiFi();
+  setTimeFromNTP();
 
   // Disconnect from Wi-Fi to save power
-  //WiFi.disconnect();
+  WiFi.disconnect();
   Serial.println("Disconnected from Wi-Fi");
 
   // deactivate crypto chip to reduce energy consumption
