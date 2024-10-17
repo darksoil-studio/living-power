@@ -216,3 +216,46 @@ void logData(float temperature, float humidity, float lightLevel, float voltage)
     // Serial.println("Error opening file");
   }
 }
+
+void connectToWiFi() {
+  int status = WL_IDLE_STATUS;
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, password);
+    delay(10000); // Wait 10 seconds before retrying
+  }
+  Serial.println("Connected to Wi-Fi");
+}
+
+void setTimeFromNTP() {
+  udp.begin(2390); // Start UDP
+  sendNTPpacket();
+  delay(1000);
+
+  if (udp.parsePacket()) {
+    byte packetBuffer[NTP_PACKET_SIZE];
+    udp.read(packetBuffer, NTP_PACKET_SIZE);
+
+    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+    unsigned long secsSince1900 = (highWord << 16) | lowWord;
+    const unsigned long seventyYears = 2208988800UL;
+    unsigned long epoch = secsSince1900 - seventyYears;
+    rtc.setEpoch(epoch + timeZone * 3600);
+    Serial.println("RTC time set from NTP");
+  } else {
+    Serial.println("No NTP response");
+  }
+
+  udp.stop();
+}
+
+void sendNTPpacket() {
+  byte packetBuffer[NTP_PACKET_SIZE] = { 0 };
+  packetBuffer[0] = 0b11100011; // LI, Version, Mode
+  udp.beginPacket(ntpServer, 123); // NTP requests are to port 123
+  udp.write(packetBuffer, NTP_PACKET_SIZE);
+  udp.endPacket();
+}
+
