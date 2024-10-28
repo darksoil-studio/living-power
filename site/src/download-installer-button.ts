@@ -92,6 +92,7 @@ export class DownloadInstallerButton extends LitElement {
 						variant="primary"
 						size="large"
 						class="no-border-radius-left"
+						style="height: 48px"
 					>
 					</sl-button>
 					<sl-menu>
